@@ -57,7 +57,7 @@ export default function StatisticsCards() {
   }
 
   return (
-    <section className="statistics-section">
+    <section id="statistics" className="statistics-section">
 
       <div className="section-container">
 

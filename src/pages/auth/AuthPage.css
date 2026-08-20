@@ -1,3 +1,7 @@
+/* =========================================================
+   AUTH PAGE
+   ========================================================= */
+
 .auth-page {
   position: relative;
   min-height: 100vh;
@@ -17,4 +21,249 @@
 .auth-page > * {
   position: relative;
   z-index: 1;
+}
+
+
+/* =========================================================
+   LARGE DESKTOP
+   ========================================================= */
+
+@media (min-width: 1200px) {
+  .auth-card {
+    width: 920px !important;
+    min-height: 560px !important;
+  }
+}
+
+
+/* =========================================================
+   LAPTOP / SMALL DESKTOP
+   992px - 1199px
+   ========================================================= */
+
+@media (max-width: 1199px) {
+  .auth-card {
+    width: 850px !important;
+    min-height: 540px !important;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+   768px - 991px
+   ========================================================= */
+
+@media (max-width: 991px) {
+  .auth-card {
+    width: 90% !important;
+    min-height: auto !important;
+  }
+
+  .auth-card > div:first-child {
+    flex: 0 0 40% !important;
+    padding: 32px 26px !important;
+  }
+
+  .auth-card > div:last-child {
+    padding: 32px 28px !important;
+  }
+
+  .auth-card h1 {
+    font-size: 25px !important;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   576px - 767px
+   ========================================================= */
+
+@media (max-width: 767px) {
+
+  /* Prevent horizontal scrolling */
+  .auth-page {
+    overflow-x: hidden;
+  }
+
+  /* Main authentication card */
+  .auth-card {
+    width: 94% !important;
+    max-width: 500px !important;
+    min-height: auto !important;
+    flex-direction: column !important;
+    margin: 20px auto !important;
+  }
+
+  /* Hide branding panel on mobile */
+  .auth-card > div:first-child {
+    display: none !important;
+  }
+
+  /* Form panel */
+  .auth-card > div:last-child {
+    width: 100% !important;
+    padding: 28px 24px !important;
+    box-sizing: border-box;
+  }
+
+  /* Role buttons */
+  .auth-card > div:last-child > div:first-child {
+    margin-bottom: 14px !important;
+  }
+
+  /* Login/Register tabs */
+  .auth-card > div:last-child > div:nth-child(2) {
+    margin-bottom: 20px !important;
+  }
+
+  /* Heading */
+  .auth-card h2 {
+    font-size: 19px !important;
+  }
+
+  /* Description */
+  .auth-card p {
+    font-size: 12.5px !important;
+  }
+
+  /* Form fields */
+  .auth-card .field {
+    margin-bottom: 15px;
+  }
+
+  .auth-card input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  /* Submit button */
+  .auth-card .btn {
+    min-height: 46px;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   400px - 575px
+   ========================================================= */
+
+@media (max-width: 575px) {
+
+  .auth-card {
+    width: 96% !important;
+  }
+
+  .auth-card > div:last-child {
+    padding: 24px 18px !important;
+  }
+
+  /* Role tabs */
+  .auth-card > div:last-child > div:first-child button {
+    font-size: 11px !important;
+    padding: 8px 2px !important;
+  }
+
+  /* Icons inside role tabs */
+  .auth-card > div:last-child > div:first-child svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Login/Register */
+  .auth-card > div:last-child > div:nth-child(2) button {
+    font-size: 12px !important;
+  }
+
+  .auth-card h2 {
+    font-size: 18px !important;
+  }
+
+  .auth-card input {
+    min-height: 43px;
+    font-size: 13px;
+  }
+
+  .auth-card .btn {
+    font-size: 13px !important;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+   Below 400px
+   ========================================================= */
+
+@media (max-width: 399px) {
+
+  .auth-card {
+    width: 98% !important;
+    border-radius: 12px !important;
+  }
+
+  .auth-card > div:last-child {
+    padding: 20px 14px !important;
+  }
+
+  .auth-card h2 {
+    font-size: 17px !important;
+  }
+
+  /* Make role tabs slightly smaller */
+  .auth-card > div:last-child > div:first-child {
+    padding: 3px !important;
+  }
+
+  .auth-card > div:last-child > div:first-child button {
+    font-size: 10px !important;
+    gap: 3px !important;
+  }
+
+  .auth-card > div:last-child > div:first-child svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .auth-card input {
+    min-height: 42px;
+  }
+}
+
+
+/* =========================================================
+   LANDSCAPE PHONES
+   ========================================================= */
+
+@media (max-width: 767px) and (orientation: landscape) {
+
+  .auth-card {
+    margin: 10px auto !important;
+  }
+
+  .auth-card > div:last-child {
+    padding: 20px 24px !important;
+  }
+
+  .auth-card h2 {
+    margin-bottom: 2px !important;
+  }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page *,
+  .auth-page *::before,
+  .auth-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

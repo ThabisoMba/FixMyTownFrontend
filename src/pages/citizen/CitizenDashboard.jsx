@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Flag, Loader, CheckCircle2, Clock, HelpCircle, Lightbulb, CheckCircle } from 'lucide-react';
 import api from '../../api/api';
 import PageTransition from '../../components/PageTransition';
+import RecentActivity from '../../components/RecentActivity';
 
 export default function CitizenDashboard() {
   const { openWizard } = useOutletContext();
@@ -40,12 +41,14 @@ useEffect(() => {
   return (
     <>
     <PageTransition>
+
     <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <RecentActivity showAll={true} authenticated={true} title="Browse issues reported by other users within your current location" promptLocation={false} />
       <div className="card" style={{ padding: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, marginBottom: 16 }}>
           <HelpCircle size={18} color="var(--navy-800)" /> How It Works
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        <div className="dashboard-howitworks-grid">
           {steps.map((s) => (
             <div key={s.num} className="card" style={{ padding: '18px 14px', textAlign: 'center' }}>
               <div
@@ -71,7 +74,7 @@ useEffect(() => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 14 }}>
+      <div className="dashboard-stats-row">
         <StatCard icon={<Flag size={20} />} value={stats?.totalReports ?? '—'} label="Total Reports" color="#2f6fed" />
         <StatCard icon={<Loader size={20} />} value={stats?.inProgress ?? '—'} label="In Progress" color="#f2a93d" />
         <StatCard icon={<CheckCircle2 size={20} />} value={stats?.resolved ?? '—'} label="Resolved" color="#22c55e" />
@@ -82,7 +85,7 @@ useEffect(() => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, marginBottom: 14 }}>
           <Lightbulb size={18} color="var(--gold-500)" /> Tips for a Great Report
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 24px' }}>
+        <div className="dashboard-tips-grid">
           {tips.map((tip) => {
             const [bold, ...rest] = tip.split('—');
             return (
@@ -100,6 +103,7 @@ useEffect(() => {
       <button className="btn btn-gold" style={{ alignSelf: 'center', padding: '14px 28px' }} onClick={openWizard}>
         Report a New Issue
       </button>
+
     </div>
     </PageTransition>
     </>

@@ -1,11 +1,3 @@
-/**
- * AuthContext.jsx
- * ----------------
- * A small global store for "who is logged in". Wraps the whole app
- * (see main.jsx) so any component can call useAuth() to read the
- * current user or trigger login/logout, instead of prop-drilling.
- */
-
 import { createContext, useContext, useState } from 'react';
 import api from '../api/api';
 

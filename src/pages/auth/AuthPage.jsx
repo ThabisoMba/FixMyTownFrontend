@@ -75,27 +75,57 @@ export default function AuthPage() {
 
     <div
       style={{
-        marginTop: "50px",          // leaves space below the fixed navbar
-        minHeight: "calc(100vh - 120px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--bg-page)",
-        padding: "40px 20px 60px",
-
-          minHeight: '100vh',
-          backgroundImage: "url('/MunicalWorkers.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          position: 'relative',
+          marginTop: "70px", // leaves space below the fixed navbar
+          minHeight: "calc(100vh - 120px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "40px 20px 60px",
+          position: "relative",
+          overflow: "hidden",
       }}
-
-
     >
+      {/* Blurred background layer */}
+      <div
+        style={{
+          position: "absolute",
+          top: -20,
+          left: -20,
+          right: -20,
+          bottom: -20,
+          backgroundImage: "url('/MunicalWorkers.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          filter: "blur(2px)",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Dark overlay for contrast against the card */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(10, 20, 40, 0.35)",
+          zIndex: 1,
+        }}
+      />
+
       <div
         className="card auth-card"
-        style={{ display: 'flex', width: 920, maxWidth: '100%', overflow: 'hidden', minHeight: 560 }}
+        style={{
+          display: 'flex',
+          width: 920,
+          maxWidth: '100%',
+          overflow: 'hidden',
+          minHeight: 560,
+          position: 'relative',
+          zIndex: 2,
+        }}
       >
         {/* Left branding panel */}
         <div

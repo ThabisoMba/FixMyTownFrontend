@@ -9,6 +9,10 @@ import {
   Linkedin
 } from "lucide-react";
 
+import { Link } from "react-router-dom";
+import TermsOfService from "../pages/public/TermsOfService";
+import PrivacyPolicy from "../pages/public/PrivacyPolicy";
+
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -18,12 +22,17 @@ export default function Footer() {
 
       <div className="footer-container">
 
+        {/* ================= BRAND ================= */}
         <div className="footer-column footer-brand">
 
           <div className="footer-logo">
             <Landmark size={30} />
+
             <div>
-              <h2>Fix<span>MyTown</span></h2>
+              <h2>
+                Fix<span>MyTown</span>
+              </h2>
+
               <p>Municipal Citizen Reporting Platform</p>
             </div>
           </div>
@@ -34,39 +43,103 @@ export default function Footer() {
             service delivery across communities.
           </p>
 
+          {/* Social Media */}
           <div className="footer-socials">
-            <a href="#"><Facebook size={18} /></a>
-            <a href="#"><Twitter size={18} /></a>
-            <a href="#"><Instagram size={18} /></a>
-            <a href="#"><Linkedin size={18} /></a>
+
+            <a
+              href="#"
+              aria-label="Facebook"
+              onClick={(e) => e.preventDefault()}
+            >
+              <Facebook size={18} />
+            </a>
+
+            <a
+              href="#"
+              aria-label="Twitter"
+              onClick={(e) => e.preventDefault()}
+            >
+              <Twitter size={18} />
+            </a>
+
+            <a
+              href="#"
+              aria-label="Instagram"
+              onClick={(e) => e.preventDefault()}
+            >
+              <Instagram size={18} />
+            </a>
+
+            <a
+              href="#"
+              aria-label="LinkedIn"
+              onClick={(e) => e.preventDefault()}
+            >
+              <Linkedin size={18} />
+            </a>
+
           </div>
 
         </div>
 
+
+        {/* ================= QUICK LINKS ================= */}
         <div className="footer-column">
 
           <h3>Quick Links</h3>
 
-          <a href="#home">Home</a>
-          <a href="#about">About</a>
-          <a href="#services">Services</a>
-          <a href="#statistics">Statistics</a>
-          <a href="#contact">Contact</a>
+          <a href="/#home">
+            Home
+          </a>
+
+          <a href="/#about">
+            About
+          </a>
+
+          <a href="/#services">
+            Services
+          </a>
+
+          <a href="/#statistics">
+            Statistics
+          </a>
+
+          <a href="/#contact">
+            Contact
+          </a>
 
         </div>
 
+
+        {/* ================= SERVICES ================= */}
         <div className="footer-column">
 
           <h3>Services</h3>
 
-          <a href="#">Report an Issue</a>
-          <a href="#">Track Reports</a>
-          <a href="#">Municipality Map</a>
-          <a href="#">Community Updates</a>
-          <a href="#">Help Centre</a>
+          <a href="/login?mode=register">
+            Report an Issue
+          </a>
+
+          <a href="/login">
+            Track Reports
+          </a>
+
+          <a href="/#home">
+            Municipality Map
+          </a>
+
+          <a href="/#statistics">
+            Community Updates
+          </a>
+
+          <a href="/#contact">
+            Help Centre
+          </a>
 
         </div>
 
+
+        {/* ================= CONTACT ================= */}
         <div className="footer-column">
 
           <h3>Contact</h3>
@@ -90,6 +163,8 @@ export default function Footer() {
 
       </div>
 
+
+      {/* ================= FOOTER BOTTOM ================= */}
       <div className="footer-bottom">
 
         <p>
@@ -97,8 +172,14 @@ export default function Footer() {
         </p>
 
         <div className="footer-bottom-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <Link to="/privacy-policy" element={<PrivacyPolicy />}>
+            Privacy Policy
+          </Link>
+
+          <Link to="/terms-of-service" element={<TermsOfService />}>
+            Terms of Service
+          </Link>
+
         </div>
 
       </div>

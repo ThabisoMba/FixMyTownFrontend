@@ -82,13 +82,80 @@ export default function DynamicReport() {
         </div>
 
         {report && (
-          <div style={{ fontSize: 12.5, color: 'var(--navy-800)', background: 'var(--bg-page)', padding: '8px 14px', borderRadius: 8, marginBottom: 16, fontWeight: 600 }}>
-            Filters applied: Date range {report.filtersApplied.From || '(any)'} to {report.filtersApplied.To || '(any)'}
-            {'  |  '}Category: {report.filtersApplied.CategoryName}
-            {'  |  '}Department: {report.filtersApplied.DepartmentName}
-            {'  |  '}Status: {report.filtersApplied.StatusName}
-          </div>
-        )}
+  <div
+    style={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8,
+      alignItems: 'center',
+      background: 'var(--bg-page)',
+      padding: '10px 14px',
+      borderRadius: 8,
+      marginBottom: 16,
+      border: '1px solid var(--navy-100)',
+    }}
+  >
+    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--navy-800)' }}>
+      Filters applied:
+    </span>
+
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        color: 'var(--navy-800)',
+        background: '#fff',
+        border: '1px solid var(--navy-100)',
+        borderRadius: 999,
+        padding: '4px 10px',
+      }}
+    >
+      Date: {report.filtersApplied.From || '(any)'} → {report.filtersApplied.To || '(any)'}
+    </span>
+
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        color: 'var(--navy-800)',
+        background: '#fff',
+        border: '1px solid var(--navy-100)',
+        borderRadius: 999,
+        padding: '4px 10px',
+      }}
+    >
+      Category: {report.filtersApplied.CategoryName}
+    </span>
+
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        color: 'var(--navy-800)',
+        background: '#fff',
+        border: '1px solid var(--navy-100)',
+        borderRadius: 999,
+        padding: '4px 10px',
+      }}
+    >
+      Department: {report.filtersApplied.DepartmentName}
+    </span>
+
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--navy-900, var(--navy-800))',
+        background: 'var(--lime-100, #eaffc7)',
+        border: '1px solid var(--lime-300, #c8f27a)',
+        borderRadius: 999,
+        padding: '4px 10px',
+      }}
+    >
+      Status: {report.filtersApplied.StatusName}
+    </span>
+  </div>
+)}
 
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8 }}>
           Filters

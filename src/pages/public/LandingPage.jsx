@@ -1,9 +1,13 @@
-import LandingNavbar from "../../components/LandingNavbar";
-import HeroStats from "../../components/HeroStats";
-import LiveSearch from "../../components/LiveSearch";
-import CategoryFilters from "../../components/CategoryFilters";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import LandingNavBar from "../../components/LandingNavBar";
+//import HeroStats from "../../components/HeroStats";
+//import LiveSearch from "../../components/LiveSearch";
+//import CategoryFilters from "../../components/CategoryFilters";
 import StatisticsCards from "../../components/StatisticsCards";
 import HowItWorks from "../../components/HowItWorks";
+import About from "../../components/About";
+import Services from "../../components/Services";
 import RecentActivity from "../../components/RecentActivity";
 import Testimonials from "../../components/Testimonials";
 import Footer from "../../components/Footer";
@@ -12,14 +16,30 @@ import PublicMap from "../../components/PublicMap";
 import "./LandingPage.css";
 
 export default function LandingPage() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    const id = location.hash.replace("#", "");
+    const el = document.getElementById(id);
+
+    if (el) {
+      // slight delay so the page has fully laid out before scrolling
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, [location.hash]);
+
   return (
     <div className="landing-page">
 
       {/* ================= NAVIGATION ================= */}
-      <LandingNavbar />
+      <LandingNavBar />
 
       {/* ================= HERO / LIVE MAP ================= */}
-      <section className="hero-section">
+      <section id="home" className="hero-section">
 
         {/* Live Leaflet Map */}
         <div className="landing-map-container">
@@ -39,13 +59,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <HeroStats />
-
-          <LiveSearch />
-
-          <CategoryFilters />
-
- 
+         
 
         </div>
 
@@ -53,6 +67,12 @@ export default function LandingPage() {
 
       {/* ================= STATISTICS ================= */}
       <StatisticsCards />
+
+      {/* ================= ABOUT ================= */}
+      <About />
+
+      {/* ================= SERVICES ================= */}
+      <Services />
 
       {/* ================= HOW IT WORKS ================= */}
       <HowItWorks />
@@ -63,8 +83,10 @@ export default function LandingPage() {
       {/* ================= TESTIMONIALS ================= */}
       <Testimonials />
 
-      {/* ================= FOOTER ================= */}
-      <Footer />
+      {/* ================= CONTACT / FOOTER ================= */}
+      <div id="contact">
+        <Footer />
+      </div>
 
     </div>
   );

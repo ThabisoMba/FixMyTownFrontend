@@ -1,17 +1,3 @@
-/**
- * ReportWizard.jsx
- * ----------------
- * Recreates "Making a Report" Steps 1-4 from the prototype:
- *   1. Pinpoint Location on Map
- *   2. Select Issue Category (icon grid)
- *   3. Title, Description, Priority Level
- *   4. Upload Photos -> Submit Report
- *
- * The step indicator (numbered circles + connecting line) matches
- * the slides: green/navy filled circles for done/current steps,
- * gray outline for steps not yet reached.
- */
-
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import {
@@ -25,6 +11,7 @@ import '../../components/leafletIcons'; // fixes Leaflet's default marker icon u
 
 const DEFAULT_CENTER = [-28.4793, 24.6727]; // rough center of South Africa
 const DEFAULT_ZOOM = 5;
+const MOBILE_BREAKPOINT = 640;
 
 /** Lives inside <MapContainer> - reports each click's lat/lng up to the wizard */
 function ClickToPin({ onPick }) {
@@ -54,6 +41,9 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
   const [categories, setCategories] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false
+  );
 
   const [location, setLocation] = useState(initialLocation);   // { lat, lng, name }
   const [categoryId, setCategoryId] = useState(null);
@@ -64,6 +54,14 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
 
   useEffect(() => {
     api.get('/lookups/categories').then((res) => setCategories(res.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // If the wizard was opened from the Map View page with a location already
@@ -124,9 +122,9 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
     (step === 3 && title.trim() && description.trim());
 
   return (
-    <Modal title="Report New Issue" icon={<Plus22 />} onClose={onClose} width={620}>
+    <Modal title="Report New Issue" icon={<Plus22 />} onClose={onClose} width={isMobile ? '100%' : 620}>
       {/* Step indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 26 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: isMobile ? 18 : 26 }}>
         {STEP_LABELS.map((label, i) => {
           const num = i + 1;
           const done = num < step;
@@ -136,42 +134,44 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
               <div style={{ textAlign: 'center' }}>
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: isMobile ? 26 : 32,
+                    height: isMobile ? 26 : 32,
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 6px',
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: isMobile ? 11 : 13,
                     background: done ? '#22c55e' : current ? 'var(--navy-800)' : 'white',
                     color: done || current ? 'white' : 'var(--text-muted)',
-                    border: done || current ? 'none' : '2px solid var(--border)'
+                    border: done || current ? 'none' : '2px solid var(--border)',
+                    flexShrink: 0
                   }}
                 >
-                  {done ? <Check size={15} /> : num}
+                  {done ? <Check size={isMobile ? 12 : 15} /> : num}
                 </div>
                 <div
                   style={{
-                    fontSize: 11,
+                    fontSize: isMobile ? 9 : 11,
                     fontWeight: 700,
-                    letterSpacing: 0.5,
+                    letterSpacing: isMobile ? 0.2 : 0.5,
                     textTransform: 'uppercase',
-                    color: done ? '#22c55e' : current ? 'var(--navy-800)' : 'var(--text-muted)'
+                    color: done ? '#22c55e' : current ? 'var(--navy-800)' : 'var(--text-muted)',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {label}
                 </div>
               </div>
-              {num < 4 && <div style={{ flex: 1, height: 2, background: done ? '#22c55e' : 'var(--border)', margin: '0 8px 20px' }} />}
+              {num < 4 && <div style={{ flex: 1, height: 2, background: done ? '#22c55e' : 'var(--border)', margin: isMobile ? '0 4px 16px' : '0 8px 20px' }} />}
             </div>
           );
         })}
       </div>
 
       {error && (
-        <div style={{ background: '#fdecec', color: '#c0362c', fontSize: 13, padding: '10px 14px', borderRadius: 8, marginBottom: 16 }}>
+        <div style={{ background: '#fdecec', color: '#c0362c', fontSize: 13, padding: '10px 14px', borderRadius: 8, marginBottom: 16, wordBreak: 'break-word' }}>
           {error}
         </div>
       )}
@@ -179,13 +179,13 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
       {/* Step 1: Location */}
       {step === 1 && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 4, flexWrap: 'wrap' }}>
             <MapPin size={16} color="#ef4444" /> Pinpoint Location on Map
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
             Click on the map below to mark the exact issue location
           </p>
-          <div style={{ height: 220, borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ height: isMobile ? 180 : 220, borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
             <MapContainer
               center={location ? [Number(location.lat), Number(location.lng)] : DEFAULT_CENTER}
               zoom={location ? 15 : DEFAULT_ZOOM}
@@ -200,7 +200,7 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
             </MapContainer>
           </div>
           {location && (
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8, wordBreak: 'break-word' }}>
               Pinned at {location.lat}, {location.lng} ({location.name})
             </p>
           )}
@@ -211,7 +211,7 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
       {step === 2 && (
         <div>
           <label style={{ fontWeight: 700, fontSize: 14, display: 'block', marginBottom: 12 }}>Select Issue Category *</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 8 : 10 }}>
             {categories.map((cat) => {
               const Icon = CATEGORY_ICONS[cat.Name] || MoreHorizontal;
               const selected = categoryId === cat.CategoryID;
@@ -223,13 +223,15 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
                     border: selected ? '2px solid var(--gold-500)' : '1px solid var(--border)',
                     background: selected ? 'var(--gold-100)' : 'white',
                     borderRadius: 10,
-                    padding: '16px 8px',
+                    padding: isMobile ? '14px 8px' : '16px 8px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 8,
                     fontSize: 12,
-                    fontWeight: 600
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    wordBreak: 'break-word'
                   }}
                 >
                   <Icon size={22} color={selected ? 'var(--gold-600)' : 'var(--navy-800)'} />
@@ -258,7 +260,7 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
             />
           </div>
           <label style={{ fontWeight: 700, fontSize: 13, display: 'block', marginBottom: 8 }}>Priority Level</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 8 : 8 }}>
             {[
               { key: 'Low', note: 'Minor', color: '#22c55e' },
               { key: 'Medium', note: 'Moderate', color: '#f2a93d' },
@@ -295,15 +297,16 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
               flexDirection: 'column',
               alignItems: 'center',
               gap: 10,
-              padding: '40px 0',
+              padding: isMobile ? '28px 12px' : '40px 0',
               border: '2px dashed var(--border)',
               borderRadius: 10,
               cursor: 'pointer',
               color: 'var(--text-secondary)',
-              background: '#fafbfc'
+              background: '#fafbfc',
+              textAlign: 'center'
             }}
           >
-            <UploadCloud size={30} />
+            <UploadCloud size={isMobile ? 26 : 30} />
             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Click or Drag Images Here</div>
             <div style={{ fontSize: 12 }}>JPG, PNG up to 10MB each</div>
             <input type="file" accept="image/*" multiple hidden onChange={handlePhotoChange} />
@@ -315,19 +318,43 @@ export default function ReportWizard({ onClose, onSubmitted, initialLocation = n
       )}
 
       {/* Footer nav */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column-reverse' : 'row',
+          justifyContent: 'flex-end',
+          gap: 10,
+          marginTop: 24,
+          paddingTop: 18,
+          borderTop: '1px solid var(--border)'
+        }}
+      >
         {step > 1 && (
-          <button className="btn btn-outline" onClick={() => setStep(step - 1)}>
+          <button
+            className="btn btn-outline"
+            onClick={() => setStep(step - 1)}
+            style={isMobile ? { width: '100%', justifyContent: 'center' } : undefined}
+          >
             <ArrowLeft size={15} /> Back
           </button>
         )}
         {step < 4 && (
-          <button className="btn btn-primary" disabled={!canGoNext} onClick={() => setStep(step + 1)}>
+          <button
+            className="btn btn-primary"
+            disabled={!canGoNext}
+            onClick={() => setStep(step + 1)}
+            style={isMobile ? { width: '100%', justifyContent: 'center' } : undefined}
+          >
             Next <ArrowRight size={15} />
           </button>
         )}
         {step === 4 && (
-          <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={isMobile ? { width: '100%', justifyContent: 'center' } : undefined}
+          >
             <Send size={15} /> {submitting ? 'Submitting...' : 'Submit Report'}
           </button>
         )}

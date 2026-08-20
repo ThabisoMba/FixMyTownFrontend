@@ -15,14 +15,6 @@ import PageTransition from '../../components/PageTransition';
 
 const API_ORIGIN = 'http://localhost:5000';
 
-/*
- * ============================================================
- * ASSIGNMENT API SETTINGS
- * ============================================================
- *
- * If your backend uses different routes for workers or
- * assignments, these are the only lines you need to change.
- */
 const WORKERS_ENDPOINT = '/admin/workers';
 const ASSIGNMENT_ENDPOINT = '/admin/assignments';
 
@@ -75,20 +67,7 @@ const [data, setData] = useState(null);
     load();
   }, []);
 
-
-  /*
-   * ============================================================
-   * PHOTO URL
-   * ============================================================
-   *
-   * Backend returns:
-   *
-   * /uploads/example.jpg
-   *
-   * React needs:
-   *
-   * http://localhost:5000/uploads/example.jpg
-   */
+   
   function getPhotoUrl(photo) {
     if (!photo) {
       return '';

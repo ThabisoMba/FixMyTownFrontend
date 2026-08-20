@@ -21,13 +21,26 @@ const STATUS_MAP = {
   'Resolved': 'Resolved'
 };
 
+const MOBILE_BREAKPOINT = 640;
+
 export default function MyReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false
+  );
 
   useEffect(() => {
     fetchReports();
+  }, []);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
 const fetchReports = async () => {
@@ -113,10 +126,10 @@ const fetchReports = async () => {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div className="card" style={{ padding: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 20 }}>
+      <div className="card" style={{ padding: isMobile ? 14 : 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: isMobile ? 14 : 16 }}>
             <ClipboardList size={18} /> My Reports ({reports.length})
           </div>
           {!loading && reports.length > 0 && (
@@ -150,14 +163,15 @@ const fetchReports = async () => {
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            marginBottom: 16
+            marginBottom: 16,
+            flexWrap: 'wrap'
           }}>
-            <XCircle size={18} color="#dc2626" />
-            <span style={{ color: '#dc2626', fontSize: 13 }}>{error}</span>
+            <XCircle size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+            <span style={{ color: '#dc2626', fontSize: 13, wordBreak: 'break-word' }}>{error}</span>
             <button 
               onClick={fetchReports}
               style={{
-                marginLeft: 'auto',
+                marginLeft: isMobile ? 0 : 'auto',
                 padding: '4px 12px',
                 background: '#dc2626',
                 color: 'white',
@@ -195,11 +209,11 @@ const fetchReports = async () => {
                 borderBottom: '1px solid var(--border)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'start', gap: 14, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'start', gap: isMobile ? 10 : 14, marginBottom: 16 }}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: isMobile ? 34 : 40,
+                    height: isMobile ? 34 : 40,
                     borderRadius: '50%',
                     background: 'var(--gold-100)',
                     display: 'flex',
@@ -208,11 +222,11 @@ const fetchReports = async () => {
                     flexShrink: 0
                   }}
                 >
-                  <Icon size={18} color="var(--gold-600)" />
+                  <Icon size={isMobile ? 15 : 18} color="var(--gold-600)" />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, fontSize: isMobile ? 14 : 15, fontWeight: 600, wordBreak: 'break-word' }}>
                       {r.title || 'Untitled Report'}
                     </h3>
                     <span style={{
@@ -221,14 +235,15 @@ const fetchReports = async () => {
                       fontSize: 11,
                       fontWeight: 600,
                       background: `${getStatusColor(r.status)}20`,
-                      color: getStatusColor(r.status)
+                      color: getStatusColor(r.status),
+                      whiteSpace: 'nowrap'
                     }}>
                       {status}
                     </span>
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                    <MapPin size={12} />
-                    {r.locationName || 'Location not specified'}
+                    <MapPin size={12} style={{ flexShrink: 0 }} />
+                    <span style={{ wordBreak: 'break-word' }}>{r.locationName || 'Location not specified'}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                     Reported {timeAgo(r.createdAt)} • #{r.reportCode}
@@ -241,14 +256,14 @@ const fetchReports = async () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 4, paddingLeft: 54 }}>
+              <div style={{ display: 'flex', gap: isMobile ? 2 : 4, paddingLeft: isMobile ? 0 : 54 }}>
                 {STATUS_STEPS.map((step, index) => {
                   const StepIcon = step.icon;
                   const isCompleted = index <= statusIndex;
                   const isCurrent = step.key === status;
                   
                   return (
-                    <div key={step.key} style={{ flex: 1, textAlign: 'center' }}>
+                    <div key={step.key} style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
                         <div style={{ 
                           flex: 1, 
@@ -257,17 +272,18 @@ const fetchReports = async () => {
                           transition: 'background 0.3s'
                         }} />
                         <div style={{
-                          width: 22,
-                          height: 22,
+                          width: isMobile ? 18 : 22,
+                          height: isMobile ? 18 : 22,
                           borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           background: isCompleted ? step.color : '#e5e7eb',
-                          border: isCurrent ? '3px solid var(--navy-800)' : 'none',
-                          transition: 'all 0.3s'
+                          border: isCurrent ? (isMobile ? '2px solid var(--navy-800)' : '3px solid var(--navy-800)') : 'none',
+                          transition: 'all 0.3s',
+                          flexShrink: 0
                         }}>
-                          <StepIcon size={11} color={isCompleted ? 'white' : '#9ca3af'} />
+                          <StepIcon size={isMobile ? 9 : 11} color={isCompleted ? 'white' : '#9ca3af'} />
                         </div>
                         <div style={{ 
                           flex: 1, 
@@ -277,10 +293,13 @@ const fetchReports = async () => {
                         }} />
                       </div>
                       <div style={{ 
-                        fontSize: 10, 
+                        fontSize: isMobile ? 8.5 : 10, 
                         fontWeight: isCurrent ? 700 : 500, 
                         color: isCurrent ? step.color : 'var(--text-secondary)',
-                        transition: 'color 0.3s'
+                        transition: 'color 0.3s',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
                       }}>
                         {step.label}
                       </div>
@@ -293,7 +312,7 @@ const fetchReports = async () => {
         })}
       </div>
 
-      <div style={{ display: 'flex', gap: 16 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 16 }}>
         <InfoCard
           icon={<Clock size={18} />}
           title="Response Time"

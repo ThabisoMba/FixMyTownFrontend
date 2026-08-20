@@ -1,16 +1,22 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
+// ================= PUBLIC PAGES =================
 import LandingPage from "./pages/public/LandingPage";
+import PrivacyPolicy from "./pages/public/PrivacyPolicy";
+import TermsOfService from "./pages/public/TermsOfService";
 import AuthPage from "./pages/auth/AuthPage";
 
+// ================= PROTECTED ROUTE =================
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// ================= CITIZEN =================
 import CitizenLayout from "./pages/citizen/CitizenLayout";
 import CitizenDashboard from "./pages/citizen/CitizenDashboard";
 import CitizenMap from "./pages/citizen/CitizenMap";
 import MyReports from "./pages/citizen/MyReports";
 
+// ================= ADMIN =================
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AllReports from "./pages/admin/AllReports";
@@ -21,6 +27,7 @@ import RegisterWorker from "./pages/admin/RegisterWorker";
 import Analytics from "./pages/admin/Analytics";
 import DynamicReport from "./pages/admin/DynamicReport";
 
+// ================= WORKER =================
 import WorkerLayout from "./pages/worker/WorkerLayout";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import MyAssignments from "./pages/worker/MyAssignments";
@@ -33,13 +40,41 @@ export default function App() {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* ================= PUBLIC ================= */}
+      <Routes
+        location={location}
+        key={location.pathname}
+      >
+        {/* =====================================================
+            PUBLIC ROUTES
+        ===================================================== */}
 
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<AuthPage />} />
+        {/* Landing Page */}
+        <Route
+          path="/"
+          element={<LandingPage />}
+        />
 
-        {/* ================= CITIZEN ================= */}
+        {/* Authentication */}
+        <Route
+          path="/login"
+          element={<AuthPage />}
+        />
+
+        {/* Privacy Policy */}
+        <Route
+          path="/privacy-policy"
+          element={<PrivacyPolicy />}
+        />
+
+        {/* Terms of Service */}
+        <Route
+          path="/terms-of-service"
+          element={<TermsOfService />}
+        />
+
+        {/* =====================================================
+            CITIZEN ROUTES
+        ===================================================== */}
 
         <Route
           path="/citizen"
@@ -49,12 +84,25 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<CitizenDashboard />} />
-          <Route path="map" element={<CitizenMap />} />
-          <Route path="reports" element={<MyReports />} />
+          <Route
+            path="dashboard"
+            element={<CitizenDashboard />}
+          />
+
+          <Route
+            path="map"
+            element={<CitizenMap />}
+          />
+
+          <Route
+            path="reports"
+            element={<MyReports />}
+          />
         </Route>
 
-        {/* ================= ADMIN ================= */}
+        {/* =====================================================
+            ADMIN ROUTES
+        ===================================================== */}
 
         <Route
           path="/admin"
@@ -64,17 +112,50 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="reports" element={<AllReports />} />
-          <Route path="assign" element={<AssignIssues />} />
-          <Route path="departments" element={<Departments />} />
-          <Route path="workers" element={<ManageWorkers />} />
-          <Route path="workers/new" element={<RegisterWorker />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="dynamic-report" element={<DynamicReport />} />
+          <Route
+            path="dashboard"
+            element={<AdminDashboard />}
+          />
+
+          <Route
+            path="reports"
+            element={<AllReports />}
+          />
+
+          <Route
+            path="assign"
+            element={<AssignIssues />}
+          />
+
+          <Route
+            path="departments"
+            element={<Departments />}
+          />
+
+          <Route
+            path="workers"
+            element={<ManageWorkers />}
+          />
+
+          <Route
+            path="workers/new"
+            element={<RegisterWorker />}
+          />
+
+          <Route
+            path="analytics"
+            element={<Analytics />}
+          />
+
+          <Route
+            path="dynamic-report"
+            element={<DynamicReport />}
+          />
         </Route>
 
-        {/* ================= WORKER ================= */}
+        {/* =====================================================
+            WORKER ROUTES
+        ===================================================== */}
 
         <Route
           path="/worker"
@@ -84,16 +165,41 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<WorkerDashboard />} />
-          <Route path="assignments" element={<MyAssignments />} />
-          <Route path="in-progress" element={<InProgress />} />
-          <Route path="completed" element={<Completed />} />
-          <Route path="profile" element={<MyProfile />} />
+          <Route
+            path="dashboard"
+            element={<WorkerDashboard />}
+          />
+
+          <Route
+            path="assignments"
+            element={<MyAssignments />}
+          />
+
+          <Route
+            path="in-progress"
+            element={<InProgress />}
+          />
+
+          <Route
+            path="completed"
+            element={<Completed />}
+          />
+
+          <Route
+            path="profile"
+            element={<MyProfile />}
+          />
         </Route>
 
-        {/* ================= FALLBACK ================= */}
+        {/* =====================================================
+            FALLBACK
+        ===================================================== */}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
+
       </Routes>
     </AnimatePresence>
   );

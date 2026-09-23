@@ -118,7 +118,7 @@ export default function AuthPage() {
           left: -20,
           right: -20,
           bottom: -20,
-          backgroundImage: "url('/MunicalWorkers.jpg')",
+          backgroundImage: "url('/grp-03-39/MunicipalWorkers.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

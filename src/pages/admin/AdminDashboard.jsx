@@ -612,11 +612,34 @@ const [data, setData] = useState(null);
                               '12px 16px'
                           }}
                         >
-                          <StatusBadge
-                            status={
-                              report.Status
-                            }
-                          />
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              flexWrap: 'wrap'
+                            }}
+                          >
+                            <StatusBadge
+                              status={
+                                report.Status
+                              }
+                            />
+
+                            {report.IsLate && (
+                              <span
+                                className="badge"
+                                title="This report has been open longer than its SLA allows for its priority"
+                                style={{
+                                  background: '#fee2e2',
+                                  color: '#991b1b',
+                                  fontWeight: 700
+                                }}
+                              >
+                                LATE
+                              </span>
+                            )}
+                          </div>
                         </td>
 
 

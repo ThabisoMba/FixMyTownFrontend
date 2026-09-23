@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, UserCog, Building2, Users, UserPlus, BarChart3, FileText } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, AlertTriangle, UserCog, Building2, Users, UserPlus, BarChart3, FileText } from 'lucide-react';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,7 +11,8 @@ export default function AdminLayout() {
       heading: 'Overview',
       items: [
         { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard', end: true },
-        { label: 'All Reports', icon: ClipboardList, path: '/admin/reports' }
+        { label: 'All Reports', icon: ClipboardList, path: '/admin/reports' },
+        { label: 'Late Reports', icon: AlertTriangle, path: '/admin/reports/late' }
       ]
     },
     {

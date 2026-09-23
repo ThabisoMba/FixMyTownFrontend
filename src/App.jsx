@@ -20,6 +20,7 @@ import MyReports from "./pages/citizen/MyReports";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AllReports from "./pages/admin/AllReports";
+import LateReports from "./pages/admin/LateReports";
 import AssignIssues from "./pages/admin/AssignIssues";
 import Departments from "./pages/admin/Departments";
 import ManageWorkers from "./pages/admin/ManageWorkers";
@@ -31,6 +32,7 @@ import DynamicReport from "./pages/admin/DynamicReport";
 import WorkerLayout from "./pages/worker/WorkerLayout";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import MyAssignments from "./pages/worker/MyAssignments";
+import RecentAssignments from "./pages/worker/RecentAssignments";
 import InProgress from "./pages/worker/InProgress";
 import Completed from "./pages/worker/Completed";
 import MyProfile from "./pages/worker/MyProfile";
@@ -44,33 +46,31 @@ export default function App() {
         location={location}
         key={location.pathname}
       >
+
         {/* =====================================================
             PUBLIC ROUTES
         ===================================================== */}
 
-        {/* Landing Page */}
         <Route
           path="/"
           element={<LandingPage />}
         />
 
-        {/* Authentication */}
         <Route
           path="/login"
           element={<AuthPage />}
         />
 
-        {/* Privacy Policy */}
         <Route
           path="/privacy-policy"
           element={<PrivacyPolicy />}
         />
 
-        {/* Terms of Service */}
         <Route
           path="/terms-of-service"
           element={<TermsOfService />}
         />
+
 
         {/* =====================================================
             CITIZEN ROUTES
@@ -84,6 +84,7 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+
           <Route
             path="dashboard"
             element={<CitizenDashboard />}
@@ -98,7 +99,9 @@ export default function App() {
             path="reports"
             element={<MyReports />}
           />
+
         </Route>
+
 
         {/* =====================================================
             ADMIN ROUTES
@@ -112,6 +115,7 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+
           <Route
             path="dashboard"
             element={<AdminDashboard />}
@@ -120,6 +124,11 @@ export default function App() {
           <Route
             path="reports"
             element={<AllReports />}
+          />
+
+          <Route
+            path="reports/late"
+            element={<LateReports />}
           />
 
           <Route
@@ -151,7 +160,9 @@ export default function App() {
             path="dynamic-report"
             element={<DynamicReport />}
           />
+
         </Route>
+
 
         {/* =====================================================
             WORKER ROUTES
@@ -165,31 +176,45 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+
+          {/* Worker Dashboard */}
           <Route
             path="dashboard"
             element={<WorkerDashboard />}
           />
 
+          {/* All Assignments */}
           <Route
             path="assignments"
             element={<MyAssignments />}
           />
 
+          {/* Recently Assigned */}
+          <Route
+            path="recently-assigned"
+            element={<RecentAssignments />}
+          />
+
+          {/* In Progress */}
           <Route
             path="in-progress"
             element={<InProgress />}
           />
 
+          {/* Completed */}
           <Route
             path="completed"
             element={<Completed />}
           />
 
+          {/* Profile */}
           <Route
             path="profile"
             element={<MyProfile />}
           />
+
         </Route>
+
 
         {/* =====================================================
             FALLBACK
@@ -197,7 +222,12 @@ export default function App() {
 
         <Route
           path="*"
-          element={<Navigate to="/" replace />}
+          element={
+            <Navigate
+              to="/"
+              replace
+            />
+          }
         />
 
       </Routes>

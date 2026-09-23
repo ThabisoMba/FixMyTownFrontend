@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, ShieldCheck, HardHat, Mail, Lock, LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import { User, ShieldCheck, HardHat, Mail, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PasswordHint from '../../components/PasswordHint';
+import PasswordInput from '../../components/PasswordInput';
+import TermsGateModal from '../../components/TermsGateModal';
+import { hasAcceptedTerms, acceptTerms, declineTerms } from '../../utils/termsConsent';
 import { isPasswordValid } from '../../utils/passwordValidation';
 import LandingNavBar from '../../components/LandingNavBar';
 import PageTransition from "../../components/PageTransition";
@@ -25,6 +28,7 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [showTermsGate, setShowTermsGate] = useState(false);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +41,23 @@ export default function AuthPage() {
     setRole(newRole);
     setMode('login'); // only citizens can register, so reset to login for admin/worker
     setError('');
+  }
+
+  async function performAuth() {
+    setLoading(true);
+    try {
+      let user;
+      if (mode === 'login') {
+        user = await login(form.email, form.password, role);
+      } else {
+        user = await register(form.fullName, form.email, form.password, form.phone);
+      }
+      navigate(`/${user.role}/dashboard`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSubmit(e) {
@@ -52,20 +73,24 @@ export default function AuthPage() {
       return;
     }
 
-    setLoading(true);
-    try {
-      let user;
-      if (mode === 'login') {
-        user = await login(form.email, form.password, role);
-      } else {
-        user = await register(form.fullName, form.email, form.password, form.phone);
-      }
-      navigate(`/${user.role}/dashboard`);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+    if (!hasAcceptedTerms()) {
+      setShowTermsGate(true);
+      return;
     }
+
+    await performAuth();
+  }
+
+  function handleAcceptTerms() {
+    acceptTerms();
+    setShowTermsGate(false);
+    performAuth();
+  }
+
+  function handleDeclineTerms() {
+    declineTerms();
+    setShowTermsGate(false);
+    setError('You need to accept the Terms of Service to log in or create an account.');
   }
 
   return (
@@ -316,18 +341,13 @@ export default function AuthPage() {
 
             <div className="field">
               <label>Password</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--text-muted)' }} />
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder={mode === 'login' ? 'Enter password' : 'Create password'}
-                  style={{ paddingLeft: 34 }}
-                  required
-                />
-              </div>
+              <PasswordInput
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder={mode === 'login' ? 'Enter password' : 'Create password'}
+                required
+              />
               {mode === 'register' && <PasswordHint password={form.password} />}
               {mode === 'login' && (
                 <button
@@ -352,8 +372,8 @@ export default function AuthPage() {
             {mode === 'register' && (
               <div className="field">
                 <label>Confirm Password</label>
-                <input
-                  type="password"
+                <PasswordInput
+                  showIcon={false}
                   name="confirmPassword"
                   value={form.confirmPassword}
                   onChange={handleChange}
@@ -392,6 +412,13 @@ export default function AuthPage() {
       </div>
 
       {forgotPasswordOpen && <ForgotPasswordModal onClose={() => setForgotPasswordOpen(false)} />}
+
+      {showTermsGate && (
+        <TermsGateModal
+          onAccept={handleAcceptTerms}
+          onDecline={handleDeclineTerms}
+        />
+      )}
     </div>
     </PageTransition>
     </>

@@ -100,9 +100,6 @@ useEffect(() => {
         </div>
       </div>
 
-      <button className="btn btn-gold" style={{ alignSelf: 'center', padding: '14px 28px' }} onClick={openWizard}>
-        Report a New Issue
-      </button>
 
     </div>
     </PageTransition>

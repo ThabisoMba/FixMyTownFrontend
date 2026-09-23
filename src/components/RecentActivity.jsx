@@ -5,7 +5,7 @@ import api from "../api/api";
 import { distanceKm, getUserLocation } from "../utils/geo";
 import { formatSADateTime } from "../utils/dateUtils";
 
-const RADIUS_KM = 50;
+const RADIUS_KM = 10;
 const PREVIEW_COUNT = 6;
 const API_ORIGIN = "http://localhost:5000";
 
@@ -244,6 +244,55 @@ export default function RecentActivity({
   );
 }
 
+function statusBadgeStyle(status) {
+  const map = {
+    Reported: { bg: "#fef3c7", color: "#92400e" },
+    Assigned: { bg: "#dbeafe", color: "#1e40af" },
+    InProgress: { bg: "#dbeafe", color: "#1e40af" },
+    "In Progress": { bg: "#dbeafe", color: "#1e40af" },
+    Resolved: { bg: "#dcfce7", color: "#166534" }
+  };
+  const c = map[status] || { bg: "#f1f5f9", color: "#475569" };
+  return {
+    padding: "4px 10px",
+    borderRadius: 999,
+    fontSize: 11.5,
+    fontWeight: 700,
+    background: c.bg,
+    color: c.color,
+    textTransform: "uppercase",
+    letterSpacing: 0.3
+  };
+}
+
+function priorityBadgeStyle(priority) {
+  const map = {
+    Low: { bg: "#f1f5f9", color: "#475569" },
+    Medium: { bg: "#fef3c7", color: "#92400e" },
+    High: { bg: "#ffedd5", color: "#9a3412" },
+    Critical: { bg: "#fee2e2", color: "#991b1b" }
+  };
+  const c = map[priority] || { bg: "#f1f5f9", color: "#475569" };
+  return {
+    padding: "4px 10px",
+    borderRadius: 999,
+    fontSize: 11.5,
+    fontWeight: 700,
+    background: c.bg,
+    color: c.color,
+    textTransform: "capitalize"
+  };
+}
+
+const categoryBadgeStyle = {
+  padding: "4px 10px",
+  borderRadius: 999,
+  fontSize: 11.5,
+  fontWeight: 700,
+  background: "#ede9fe",
+  color: "#5b21b6"
+};
+
 function getPhotoUrl(photo) {
   if (!photo) return "";
   if (photo.startsWith("http://") || photo.startsWith("https://")) return photo;
@@ -338,7 +387,7 @@ function IssueDetailModal({ issue, onClose }) {
           </h3>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13.5, color: "#475569" }}>
             <MapPin size={16} color="#94a3b8" style={{ flexShrink: 0, marginTop: 1 }} />
             <span style={{ wordBreak: "break-word" }}>{issue.Location || "Location not specified"}</span>
@@ -348,6 +397,37 @@ function IssueDetailModal({ issue, onClose }) {
             {formatSADateTime(issue.CreatedAt)}
           </div>
         </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+          {issue.Status && (
+            <span style={statusBadgeStyle(issue.Status)}>{issue.Status}</span>
+          )}
+          {issue.Priority && (
+            <span style={priorityBadgeStyle(issue.Priority)}>{issue.Priority} priority</span>
+          )}
+          {issue.Category && (
+            <span style={categoryBadgeStyle}>{issue.Category}</span>
+          )}
+        </div>
+
+        {issue.Description && (
+          <div style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#64748b",
+                textTransform: "uppercase",
+                marginBottom: 6
+              }}
+            >
+              Description
+            </div>
+            <p style={{ margin: 0, fontSize: 13.5, color: "#475569", lineHeight: 1.5, wordBreak: "break-word" }}>
+              {issue.Description}
+            </p>
+          </div>
+        )}
 
         <div>
           <div

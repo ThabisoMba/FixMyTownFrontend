@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import LandingNavBar from "../../components/LandingNavBar";
 //import HeroStats from "../../components/HeroStats";
@@ -12,11 +12,22 @@ import RecentActivity from "../../components/RecentActivity";
 import Testimonials from "../../components/Testimonials";
 import Footer from "../../components/Footer";
 import PublicMap from "../../components/PublicMap";
+import TermsGateModal from "../../components/TermsGateModal";
+import { useAuth } from "../../context/AuthContext";
+import {
+  hasAcceptedTerms,
+  acceptTerms,
+  declineTerms,
+  hasPromptedThisSession,
+  markPromptedThisSession
+} from "../../utils/termsConsent";
 
 import "./LandingPage.css";
 
 export default function LandingPage() {
   const location = useLocation();
+  const { user } = useAuth();
+  const [showTermsGate, setShowTermsGate] = useState(false);
 
   useEffect(() => {
     if (!location.hash) return;
@@ -32,8 +43,43 @@ export default function LandingPage() {
     }
   }, [location.hash]);
 
+  useEffect(() => {
+    // Only prompt guests who haven't already accepted/declined, and
+    // only once per browser session so it doesn't nag on every visit.
+    if (user || hasAcceptedTerms() || hasPromptedThisSession()) return;
+
+    function handleFirstScroll() {
+      setShowTermsGate(true);
+      markPromptedThisSession();
+      window.removeEventListener("scroll", handleFirstScroll);
+    }
+
+    window.addEventListener("scroll", handleFirstScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleFirstScroll);
+  }, [user]);
+
+  function handleAcceptTerms() {
+    acceptTerms();
+    setShowTermsGate(false);
+  }
+
+  function handleDeclineTerms() {
+    declineTerms();
+    setShowTermsGate(false);
+    // Guests can still browse public info anonymously after declining -
+    // the gate re-appears specifically when they try to register or log
+    // in (see AuthPage.jsx), which is where accepting actually matters.
+  }
+
   return (
     <div className="landing-page">
+
+      {showTermsGate && (
+        <TermsGateModal
+          onAccept={handleAcceptTerms}
+          onDecline={handleDeclineTerms}
+        />
+      )}
 
       {/* ================= NAVIGATION ================= */}
       <LandingNavBar />

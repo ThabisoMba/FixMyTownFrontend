@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ClipboardList,
+  AlertTriangle,
   Eye,
   UserPlus,
   Search,
@@ -23,7 +24,7 @@ const STATUSES = [
 // Backend URL where wwwroot/uploads is served
 const API_ORIGIN = 'http://localhost:5000';
 
-export default function AllReports() {
+export default function AllReports({ lateOnly = false } = {}) {
   const [reports, setReports] = useState([]);
   const [status, setStatus] = useState('All Status');
   const [search, setSearch] = useState('');
@@ -37,7 +38,8 @@ export default function AllReports() {
       .get('/admin/reports', {
         params: {
           status,
-          search
+          search,
+          late: lateOnly || undefined
         }
       })
       .then((res) => {
@@ -48,7 +50,7 @@ export default function AllReports() {
 
   useEffect(() => {
     load();
-  }, [status, search]);
+  }, [status, search, lateOnly]);
 
   /*
    * Converts the backend photo URL:
@@ -181,7 +183,7 @@ export default function AllReports() {
     <div>
       <TopBar
         section="Admin"
-        page="All Reports"
+        page={lateOnly ? 'Late Reports' : 'All Reports'}
         onRefresh={load}
         showExport
       />
@@ -204,11 +206,16 @@ export default function AllReports() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8
+                gap: 8,
+                color: lateOnly ? '#991b1b' : undefined
               }}
             >
-              <ClipboardList size={17} />
-              All Reports ({reports.length})
+              {lateOnly ? (
+                <AlertTriangle size={17} />
+              ) : (
+                <ClipboardList size={17} />
+              )}
+              {lateOnly ? 'Late Reports' : 'All Reports'} ({reports.length})
             </strong>
 
             <div
@@ -447,9 +454,32 @@ export default function AllReports() {
                         padding: '12px 16px'
                       }}
                     >
-                      <StatusBadge
-                        status={report.Status}
-                      />
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <StatusBadge
+                          status={report.Status}
+                        />
+
+                        {report.IsLate && (
+                          <span
+                            className="badge"
+                            title="This report has been open longer than its SLA allows for its priority"
+                            style={{
+                              background: '#fee2e2',
+                              color: '#991b1b',
+                              fontWeight: 700
+                            }}
+                          >
+                            LATE
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td
@@ -508,7 +538,9 @@ export default function AllReports() {
                         color: 'var(--text-secondary)'
                       }}
                     >
-                      No reports match this filter.
+                      {lateOnly
+                        ? 'No late reports right now - everything is within its SLA.'
+                        : 'No reports match this filter.'}
                     </td>
                   </tr>
                 )}
@@ -702,9 +734,32 @@ function ReportModal({
           <DetailItem
             label="Status"
             value={
-              <StatusBadge
-                status={report.Status}
-              />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  flexWrap: 'wrap'
+                }}
+              >
+                <StatusBadge
+                  status={report.Status}
+                />
+
+                {report.IsLate && (
+                  <span
+                    className="badge"
+                    title="This report has been open longer than its SLA allows for its priority"
+                    style={{
+                      background: '#fee2e2',
+                      color: '#991b1b',
+                      fontWeight: 700
+                    }}
+                  >
+                    LATE
+                  </span>
+                )}
+              </div>
             }
           />
 

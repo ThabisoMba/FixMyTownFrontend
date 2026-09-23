@@ -1,20 +1,9 @@
-/**
- * ForgotPasswordModal.jsx
- * -----------------------
- * Three steps, matching the backend's three endpoints:
- *   1. Email        -> POST /auth/forgot-password/check-email
- *   2. New password -> POST /auth/forgot-password/request-otp (emails a 6-digit code)
- *   3. OTP code     -> POST /auth/forgot-password/verify-otp   (this is what actually changes the password)
- *
- * Nothing about the account changes until step 3 succeeds - steps 1-2
- * just check the email and hold the new password as "pending".
- */
-
 import { useState } from 'react';
-import { Mail, Lock, KeyRound, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, KeyRound, ArrowRight, CheckCircle2 } from 'lucide-react';
 import api from '../../api/api';
 import Modal from '../../components/Modal';
 import PasswordHint from '../../components/PasswordHint';
+import PasswordInput from '../../components/PasswordInput';
 import { isPasswordValid } from '../../utils/passwordValidation';
 
 export default function ForgotPasswordModal({ onClose }) {
@@ -125,24 +114,19 @@ export default function ForgotPasswordModal({ onClose }) {
           </p>
           <div className="field">
             <label>New Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--text-muted)' }} />
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Create a new password"
-                style={{ paddingLeft: 34 }}
-                required
-                autoFocus
-              />
-            </div>
+            <PasswordInput
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Create a new password"
+              required
+              autoFocus
+            />
             <PasswordHint password={newPassword} />
           </div>
           <div className="field">
             <label>Confirm New Password</label>
-            <input
-              type="password"
+            <PasswordInput
+              showIcon={false}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter your new password"

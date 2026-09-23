@@ -394,11 +394,18 @@ const categoryBadgeStyle = {
 function getPhotoUrl(photo) {
   if (!photo) return "";
 
-  if (photo.startsWith("http://") || photo.startsWith("https://")) {
+  if (
+    photo.startsWith("http://") ||
+    photo.startsWith("https://")
+  ) {
     return photo;
   }
 
-  return `${API_ORIGIN}${photo.startsWith("/") ? "" : "/"}${photo}`;
+  if (photo.startsWith("/")) {
+    return `${API_ORIGIN}${photo}`;
+  }
+
+  return `${API_ORIGIN}/${photo}`;
 }
 
 function IssueDetailModal({ issue, onClose }) {

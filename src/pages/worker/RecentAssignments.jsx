@@ -28,13 +28,9 @@ import '../../components/leafletIcons';
 import { formatSADateTime } from '../../utils/dateUtils';
 
 
-<<<<<<< HEAD
 const API_ORIGIN = import.meta.env.DEV
   ? 'http://localhost:5000'
   : '/grp-03-39';
-=======
-const API_ORIGIN = '/grp-03-39/api';
->>>>>>> 6b652f25a7802399c32d38acf1863ecc4d9ac6c6
 
 
 /* =============================================================
@@ -59,6 +55,9 @@ export default function RecentAssignments() {
    *
    * GET /api/worker/assignments?status=Assigned
    */
+
+  
+
   async function load() {
     try {
       setLoading(true);
@@ -100,6 +99,59 @@ export default function RecentAssignments() {
       setLoading(false);
     }
   }
+
+  async function openReportMap(report) {
+  try {
+    setError('');
+
+    const reportId =
+      report.ReportID ??
+      report.ReportId;
+
+    if (!reportId) {
+      setError(
+        'Could not determine the report ID.'
+      );
+      return;
+    }
+
+    const response = await api.get(
+      `/worker/reports/${reportId}`
+    );
+
+    const fullReport = response.data;
+
+    const latitude = Number(
+      fullReport.Latitude
+    );
+
+    const longitude = Number(
+      fullReport.Longitude
+    );
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
+      setError(
+        'Location coordinates are not available for this issue.'
+      );
+      return;
+    }
+
+    setMapReport(fullReport);
+  } catch (err) {
+    console.error(
+      'Could not load issue location:',
+      err
+    );
+
+    setError(
+      err.response?.data?.message ||
+        'Could not load the issue location.'
+    );
+  }
+}
 
 
   /*
@@ -339,7 +391,7 @@ export default function RecentAssignments() {
                     setSelectedIssue(r)
                   }
                   onViewMap={() =>
-                    setMapReport(r)
+                    openReportMap(r)
                   }
                 />
               ))}
@@ -445,19 +497,6 @@ function AssignmentCard({
       ).toLocaleDateString()
     : 'Unknown date';
 
-
-  const latitude = Number(
-    report.Latitude
-  );
-
-  const longitude = Number(
-    report.Longitude
-  );
-
-
-  const hasCoordinates =
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude);
 
 
   return (
@@ -631,30 +670,20 @@ function AssignmentCard({
 
         {/* VIEW ON MAP */}
 
-        <button
-          type="button"
-          className="btn"
-          style={{
-            padding: '8px 14px',
-            fontSize: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
-          onClick={onViewMap}
-          disabled={!hasCoordinates}
-          title={
-            hasCoordinates
-              ? 'View issue location on map'
-              : 'Location coordinates are unavailable'
-          }
-        >
-
-          <MapPin size={14} />
-
-          View on Map
-
-        </button>
+<AssignmentCard
+  key={
+    r.ReportID ??
+    r.ReportId ??
+    r.ReferenceNumber
+  }
+  report={r}
+  onView={() =>
+    setSelectedIssue(r)
+  }
+  onViewMap={() =>
+    openReportMap(r)
+  }
+/>
 
       </div>
 

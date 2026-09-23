@@ -12,7 +12,7 @@ import TopBar from '../../components/TopBar';
 import StatusBadge from '../../components/StatusBadge';
 import ProgressModal from './ProgressModal';
 
-const API_ORIGIN = 'http://localhost:5000';
+const API_ORIGIN = '/grp-03-39/api';
 
 export default function MyAssignments() {
   const [reports, setReports] = useState([]);

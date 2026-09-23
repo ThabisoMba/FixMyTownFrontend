@@ -28,7 +28,7 @@ import '../../components/leafletIcons';
 import { formatSADateTime } from '../../utils/dateUtils';
 
 
-const API_ORIGIN = 'http://localhost:5000';
+const API_ORIGIN = '/grp-03-39/api';
 
 
 /* =============================================================

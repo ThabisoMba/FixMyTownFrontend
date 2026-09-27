@@ -28,9 +28,11 @@ import '../../components/leafletIcons';
 import { formatSADateTime } from '../../utils/dateUtils';
 
 
+const APP_BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
 const API_ORIGIN = import.meta.env.DEV
   ? 'http://localhost:5000'
-  : '/grp-03-39';
+  : `${window.location.origin}${APP_BASE}`;
 
 
 /* =============================================================
@@ -43,20 +45,8 @@ export default function RecentAssignments() {
   const [error, setError] = useState('');
 
   const [mapReport, setMapReport] = useState(null);
-
   const [selectedIssue, setSelectedIssue] = useState(null);
 
-
-  /*
-   * Load recently assigned reports.
-   *
-   * The backend already restricts this request to the
-   * currently authenticated worker:
-   *
-   * GET /api/worker/assignments?status=Assigned
-   */
-
-  
 
   async function load() {
     try {
@@ -77,99 +67,85 @@ export default function RecentAssignments() {
           ? response.data
           : []
       );
-
     } catch (err) {
       console.error(
         'Failed to load recently assigned issues:',
         err
       );
 
-      /*
-       * Do not manually log the user out here.
-       *
-       * The api interceptor remains responsible for
-       * handling authentication errors.
-       */
       setError(
         err.response?.data?.message ||
           'Could not load recently assigned issues.'
       );
-
     } finally {
       setLoading(false);
     }
   }
 
+
   async function openReportMap(report) {
-  try {
-    setError('');
+    try {
+      setError('');
 
-    const reportId =
-      report.ReportID ??
-      report.ReportId;
+      const reportId =
+        report.ReportID ??
+        report.ReportId;
 
-    if (!reportId) {
-      setError(
-        'Could not determine the report ID.'
+      if (!reportId) {
+        setError(
+          'Could not determine the report ID.'
+        );
+        return;
+      }
+
+      const response = await api.get(
+        `/worker/reports/${reportId}`
       );
-      return;
-    }
 
-    const response = await api.get(
-      `/worker/reports/${reportId}`
-    );
+      const fullReport = response.data;
 
-    const fullReport = response.data;
-
-    const latitude = Number(
-      fullReport.Latitude
-    );
-
-    const longitude = Number(
-      fullReport.Longitude
-    );
-
-    if (
-      !Number.isFinite(latitude) ||
-      !Number.isFinite(longitude)
-    ) {
-      setError(
-        'Location coordinates are not available for this issue.'
+      const latitude = Number(
+        fullReport.Latitude
       );
-      return;
+
+      const longitude = Number(
+        fullReport.Longitude
+      );
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        setError(
+          'Location coordinates are not available for this issue.'
+        );
+        return;
+      }
+
+      setMapReport(fullReport);
+    } catch (err) {
+      console.error(
+        'Could not load issue location:',
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          'Could not load the issue location.'
+      );
     }
-
-    setMapReport(fullReport);
-  } catch (err) {
-    console.error(
-      'Could not load issue location:',
-      err
-    );
-
-    setError(
-      err.response?.data?.message ||
-        'Could not load the issue location.'
-    );
   }
-}
 
 
-  /*
-   * Load assignments when page opens.
-   */
   useEffect(() => {
     load();
   }, []);
 
 
-  /*
-   * Loading state.
-   */
   if (loading) {
     return (
       <PageTransition>
         <div>
-
           <TopBar
             section="Worker"
             page="Recently Assigned"
@@ -183,7 +159,6 @@ export default function RecentAssignments() {
           >
             Loading recently assigned issues...
           </div>
-
         </div>
       </PageTransition>
     );
@@ -194,20 +169,12 @@ export default function RecentAssignments() {
     <PageTransition>
       <div>
 
-        {/* =====================================================
-            TOP BAR
-        ===================================================== */}
-
         <TopBar
           section="Worker"
           page="Recently Assigned"
           onRefresh={load}
         />
 
-
-        {/* =====================================================
-            PAGE CONTENT
-        ===================================================== */}
 
         <div
           style={{
@@ -218,17 +185,12 @@ export default function RecentAssignments() {
           }}
         >
 
-          {/* ===================================================
-              PAGE HEADER
-          =================================================== */}
-
           <div
             className="card"
             style={{
               padding: 20
             }}
           >
-
             <div
               style={{
                 display: 'flex',
@@ -236,7 +198,6 @@ export default function RecentAssignments() {
                 gap: 10
               }}
             >
-
               <div
                 style={{
                   width: 42,
@@ -253,9 +214,7 @@ export default function RecentAssignments() {
                 <ClipboardList size={21} />
               </div>
 
-
               <div>
-
                 <div
                   style={{
                     fontSize: 17,
@@ -274,9 +233,7 @@ export default function RecentAssignments() {
                 >
                   Issues recently assigned to you
                 </div>
-
               </div>
-
 
               <div
                 style={{
@@ -291,15 +248,9 @@ export default function RecentAssignments() {
                   ? 'Assignment'
                   : 'Assignments'}
               </div>
-
             </div>
-
           </div>
 
-
-          {/* ===================================================
-              ERROR
-          =================================================== */}
 
           {error && (
             <div
@@ -314,18 +265,11 @@ export default function RecentAssignments() {
                 gap: 8
               }}
             >
-
               <AlertTriangle size={16} />
-
               {error}
-
             </div>
           )}
 
-
-          {/* ===================================================
-              ASSIGNMENTS CARD
-          =================================================== */}
 
           <div
             className="card"
@@ -333,9 +277,6 @@ export default function RecentAssignments() {
               padding: 20
             }}
           >
-
-            {/* Section heading */}
-
             <div
               style={{
                 display: 'flex',
@@ -345,7 +286,6 @@ export default function RecentAssignments() {
                 marginBottom: 16
               }}
             >
-
               <Clock3
                 size={17}
                 color="#2f6fed"
@@ -363,13 +303,8 @@ export default function RecentAssignments() {
               >
                 Assigned
               </span>
-
             </div>
 
-
-            {/* =================================================
-                ASSIGNMENT LIST
-            ================================================= */}
 
             <div
               style={{
@@ -378,28 +313,23 @@ export default function RecentAssignments() {
                 gap: 14
               }}
             >
-
-              {assignments.map((r) => (
+              {assignments.map((report) => (
                 <AssignmentCard
                   key={
-                    r.ReportID ??
-                    r.ReportId ??
-                    r.ReferenceNumber
+                    report.ReportID ??
+                    report.ReportId ??
+                    report.ReportCode
                   }
-                  report={r}
+                  report={report}
                   onView={() =>
-                    setSelectedIssue(r)
+                    setSelectedIssue(report)
                   }
                   onViewMap={() =>
-                    openReportMap(r)
+                    openReportMap(report)
                   }
                 />
               ))}
 
-
-              {/* =================================================
-                  EMPTY STATE
-              ================================================= */}
 
               {assignments.length === 0 && (
                 <div
@@ -409,7 +339,6 @@ export default function RecentAssignments() {
                     color: 'var(--text-secondary)'
                   }}
                 >
-
                   <ClipboardList
                     size={34}
                     style={{
@@ -437,20 +366,12 @@ export default function RecentAssignments() {
                     New assignments will appear here
                     when they are assigned to you.
                   </div>
-
                 </div>
               )}
-
             </div>
-
           </div>
-
         </div>
 
-
-        {/* =====================================================
-            MAP MODAL
-        ===================================================== */}
 
         {mapReport && (
           <LocationMapModal
@@ -461,10 +382,6 @@ export default function RecentAssignments() {
           />
         )}
 
-
-        {/* =====================================================
-            ISSUE DETAILS MODAL
-        ===================================================== */}
 
         {selectedIssue && (
           <IssueDetailModal
@@ -490,13 +407,14 @@ function AssignmentCard({
   onView,
   onViewMap
 }) {
-
   const createdDate = report.CreatedAt
-    ? new Date(
-        report.CreatedAt
-      ).toLocaleDateString()
+    ? formatSADateTime(report.CreatedAt)
     : 'Unknown date';
 
+  const category =
+    report.CategoryName ||
+    report.Category ||
+    'Uncategorized';
 
 
   return (
@@ -506,11 +424,6 @@ function AssignmentCard({
         padding: 16
       }}
     >
-
-      {/* ===================================================
-          TITLE + STATUS
-      =================================================== */}
-
       <div
         style={{
           display: 'flex',
@@ -519,15 +432,13 @@ function AssignmentCard({
           gap: 10
         }}
       >
-
         <strong
           style={{
             fontSize: 14
           }}
         >
-          {report.Title}
+          {report.Title || 'Untitled issue'}
         </strong>
-
 
         <span
           style={{
@@ -538,13 +449,8 @@ function AssignmentCard({
             status={report.Status}
           />
         </span>
-
       </div>
 
-
-      {/* ===================================================
-          META INFORMATION
-      =================================================== */}
 
       <div
         style={{
@@ -556,7 +462,6 @@ function AssignmentCard({
           gap: 4
         }}
       >
-
         <span>
           {report.Location ||
             report.LocationName ||
@@ -572,15 +477,10 @@ function AssignmentCard({
         <span>&bull;</span>
 
         <span>
-          {report.Priority} Priority
+          {report.Priority || 'Unknown'} Priority
         </span>
-
       </div>
 
-
-      {/* ===================================================
-          DESCRIPTION
-      =================================================== */}
 
       <p
         style={{
@@ -595,10 +495,6 @@ function AssignmentCard({
       </p>
 
 
-      {/* ===================================================
-          REFERENCE / CATEGORY
-      =================================================== */}
-
       <div
         style={{
           display: 'flex',
@@ -606,10 +502,10 @@ function AssignmentCard({
           gap: 8,
           marginBottom: 12,
           fontSize: 11,
-          color: 'var(--text-secondary)'
+          color: 'var(--text-secondary)',
+          flexWrap: 'wrap'
         }}
       >
-
         {report.ReportCode && (
           <span>
             <strong>
@@ -618,23 +514,15 @@ function AssignmentCard({
           </span>
         )}
 
-        {report.ReportCode &&
-          report.Category && (
-            <span>&bull;</span>
-          )}
-
-        {report.Category && (
-          <span>
-            {report.Category}
-          </span>
+        {report.ReportCode && category && (
+          <span>&bull;</span>
         )}
 
+        <span>
+          {category}
+        </span>
       </div>
 
-
-      {/* ===================================================
-          ACTIONS
-      =================================================== */}
 
       <div
         style={{
@@ -643,9 +531,6 @@ function AssignmentCard({
           flexWrap: 'wrap'
         }}
       >
-
-        {/* VIEW BUTTON */}
-
         <button
           type="button"
           className="btn btn-primary"
@@ -658,154 +543,31 @@ function AssignmentCard({
           }}
           onClick={onView}
         >
-
           <Eye size={14} />
-
           View
-
           <ArrowRight size={14} />
-
         </button>
 
 
-        {/* VIEW ON MAP */}
-
-<AssignmentCard
-  key={
-    r.ReportID ??
-    r.ReportId ??
-    r.ReferenceNumber
-  }
-  report={r}
-  onView={() =>
-    setSelectedIssue(r)
-  }
-  onViewMap={() =>
-    openReportMap(r)
-  }
-/>
-
+        <button
+          type="button"
+          className="btn"
+          style={{
+            padding: '8px 14px',
+            fontSize: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+          onClick={onViewMap}
+        >
+          <MapPin size={14} />
+          View on Map
+        </button>
       </div>
-
     </div>
   );
 }
-
-
-/* =============================================================
-   STATUS BADGE
-============================================================= */
-
-function statusBadgeStyle(status) {
-
-  const map = {
-    Reported: {
-      bg: '#fef3c7',
-      color: '#92400e'
-    },
-
-    Assigned: {
-      bg: '#dbeafe',
-      color: '#1e40af'
-    },
-
-    InProgress: {
-      bg: '#dbeafe',
-      color: '#1e40af'
-    },
-
-    'In Progress': {
-      bg: '#dbeafe',
-      color: '#1e40af'
-    },
-
-    Resolved: {
-      bg: '#dcfce7',
-      color: '#166534'
-    }
-  };
-
-
-  const c =
-    map[status] || {
-      bg: '#f1f5f9',
-      color: '#475569'
-    };
-
-
-  return {
-    padding: '4px 10px',
-    borderRadius: 999,
-    fontSize: 11.5,
-    fontWeight: 700,
-    background: c.bg,
-    color: c.color,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3
-  };
-}
-
-
-/* =============================================================
-   PRIORITY BADGE
-============================================================= */
-
-function priorityBadgeStyle(priority) {
-
-  const map = {
-    Low: {
-      bg: '#f1f5f9',
-      color: '#475569'
-    },
-
-    Medium: {
-      bg: '#fef3c7',
-      color: '#92400e'
-    },
-
-    High: {
-      bg: '#ffedd5',
-      color: '#9a3412'
-    },
-
-    Critical: {
-      bg: '#fee2e2',
-      color: '#991b1b'
-    }
-  };
-
-
-  const c =
-    map[priority] || {
-      bg: '#f1f5f9',
-      color: '#475569'
-    };
-
-
-  return {
-    padding: '4px 10px',
-    borderRadius: 999,
-    fontSize: 11.5,
-    fontWeight: 700,
-    background: c.bg,
-    color: c.color,
-    textTransform: 'capitalize'
-  };
-}
-
-
-/* =============================================================
-   CATEGORY BADGE
-============================================================= */
-
-const categoryBadgeStyle = {
-  padding: '4px 10px',
-  borderRadius: 999,
-  fontSize: 11.5,
-  fontWeight: 700,
-  background: '#ede9fe',
-  color: '#5b21b6'
-};
 
 
 /* =============================================================
@@ -813,11 +575,9 @@ const categoryBadgeStyle = {
 ============================================================= */
 
 function getPhotoUrl(photo) {
-
   if (!photo) {
     return '';
   }
-
 
   if (
     photo.startsWith('http://') ||
@@ -826,11 +586,9 @@ function getPhotoUrl(photo) {
     return photo;
   }
 
-
   if (photo.startsWith('/')) {
     return `${API_ORIGIN}${photo}`;
   }
-
 
   return `${API_ORIGIN}/${photo}`;
 }
@@ -844,83 +602,67 @@ function IssueDetailModal({
   issue,
   onClose
 }) {
-
   const [photoIndex, setPhotoIndex] = useState(0);
-
 
   const photos = Array.isArray(issue.Photos)
     ? issue.Photos
     : [];
 
+  const category =
+    issue.CategoryName ||
+    issue.Category ||
+    'Uncategorized';
 
-  /*
-   * Keyboard controls.
-   */
+
   useEffect(() => {
-
-    function handleEscape(e) {
-
+    function handleKeyboard(e) {
       if (e.key === 'Escape') {
         onClose();
       }
-
 
       if (
         e.key === 'ArrowLeft' &&
         photos.length > 1
       ) {
         setPhotoIndex(
-          (i) =>
-            i === 0
+          (index) =>
+            index === 0
               ? photos.length - 1
-              : i - 1
+              : index - 1
         );
       }
-
 
       if (
         e.key === 'ArrowRight' &&
         photos.length > 1
       ) {
         setPhotoIndex(
-          (i) =>
-            i === photos.length - 1
+          (index) =>
+            index === photos.length - 1
               ? 0
-              : i + 1
+              : index + 1
         );
       }
-
     }
-
 
     document.addEventListener(
       'keydown',
-      handleEscape
+      handleKeyboard
     );
-
 
     return () => {
       document.removeEventListener(
         'keydown',
-        handleEscape
+        handleKeyboard
       );
     };
-
   }, [onClose, photos.length]);
 
 
-  /*
-   * Prevent background click from closing
-   * when clicking inside the modal.
-   */
   function handleBackdropClick(e) {
-
-    if (
-      e.target === e.currentTarget
-    ) {
+    if (e.target === e.currentTarget) {
       onClose();
     }
-
   }
 
 
@@ -931,17 +673,14 @@ function IssueDetailModal({
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        background:
-          'rgba(15, 23, 42, 0.55)',
+        background: 'rgba(15, 23, 42, 0.55)',
         backdropFilter: 'blur(3px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding:
-          'clamp(10px, 4vw, 20px)'
+        padding: 'clamp(10px, 4vw, 20px)'
       }}
     >
-
       <div
         role="dialog"
         aria-modal="true"
@@ -949,178 +688,71 @@ function IssueDetailModal({
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: 560,
+          maxWidth: 620,
           maxHeight: '90vh',
           overflowY: 'auto',
           background: 'white',
           borderRadius: 14,
-          boxShadow:
-            '0 20px 60px rgba(0, 0, 0, 0.3)',
-          padding:
-            'clamp(16px, 5vw, 24px)'
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          padding: 'clamp(16px, 5vw, 24px)'
         }}
       >
-
-        {/* =================================================
-            CLOSE BUTTON
-        ================================================= */}
-
         <button
+          type="button"
           onClick={onClose}
           aria-label="Close"
           title="Close"
           style={{
             position: 'absolute',
-            top:
-              'clamp(10px, 3vw, 16px)',
-            right:
-              'clamp(10px, 3vw, 16px)',
+            top: 14,
+            right: 14,
             width: 34,
             height: 34,
             borderRadius: '50%',
-            border:
-              '1px solid #e2e8f0',
+            border: '1px solid #e2e8f0',
             background: '#f8fafc',
             color: '#475569',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            zIndex: 2,
-            flexShrink: 0
+            zIndex: 2
           }}
         >
           <X size={17} />
         </button>
 
 
-        {/* =================================================
-            TITLE
-        ================================================= */}
-
         <div
           style={{
-            paddingRight:
-              'clamp(30px, 10vw, 40px)',
-            marginBottom: 18
+            paddingRight: 46,
+            marginBottom: 20
           }}
         >
-
           <div
             style={{
               fontSize: 11,
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
               textTransform: 'uppercase',
+              fontWeight: 700,
+              letterSpacing: 0.5,
               marginBottom: 5
             }}
           >
-            #
-            {issue.ReferenceNumber ||
-              issue.ReportCode ||
-              issue.ReportID ||
-              issue.ReportId ||
-              'Issue'}
+            {issue.ReportCode || 'Assigned report'}
           </div>
 
-
-          <h3
+          <h2
             style={{
               margin: 0,
-              fontSize:
-                'clamp(16px, 4.5vw, 19px)',
-              fontWeight: 700,
-              color: '#1e293b',
-              wordBreak: 'break-word'
+              fontSize: 20,
+              lineHeight: 1.3
             }}
           >
-            {issue.Title ||
-              'Untitled Issue'}
-          </h3>
-
+            {issue.Title || 'Untitled issue'}
+          </h2>
         </div>
 
-
-        {/* =================================================
-            ISSUE INFORMATION
-        ================================================= */}
-
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            marginBottom: 16
-          }}
-        >
-
-          {/* LOCATION */}
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 8,
-              fontSize: 13.5,
-              color: '#475569'
-            }}
-          >
-
-            <MapPin
-              size={16}
-              color="#94a3b8"
-              style={{
-                flexShrink: 0,
-                marginTop: 1
-              }}
-            />
-
-            <span
-              style={{
-                wordBreak: 'break-word'
-              }}
-            >
-              {issue.Location ||
-                issue.LocationName ||
-                'Location not specified'}
-            </span>
-
-          </div>
-
-
-          {/* DATE */}
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontSize: 13.5,
-              color: '#475569'
-            }}
-          >
-
-            <Clock3
-              size={16}
-              color="#94a3b8"
-              style={{
-                flexShrink: 0
-              }}
-            />
-
-            {issue.CreatedAt
-              ? formatSADateTime(
-                  issue.CreatedAt
-                )
-              : 'Date not available'}
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            BADGES
-        ================================================= */}
 
         <div
           style={{
@@ -1130,86 +762,89 @@ function IssueDetailModal({
             marginBottom: 18
           }}
         >
+          <StatusBadge
+            status={issue.Status}
+          />
 
-          {issue.Status && (
-            <span
-              style={statusBadgeStyle(
-                issue.Status
-              )}
-            >
-              {issue.Status}
-            </span>
-          )}
+          <span
+            style={priorityBadgeStyle(
+              issue.Priority
+            )}
+          >
+            {issue.Priority || 'Unknown'} Priority
+          </span>
 
-
-          {issue.Priority && (
-            <span
-              style={priorityBadgeStyle(
-                issue.Priority
-              )}
-            >
-              {issue.Priority} priority
-            </span>
-          )}
-
-
-          {issue.Category && (
-            <span
-              style={categoryBadgeStyle}
-            >
-              {issue.Category}
-            </span>
-          )}
-
+          <span
+            style={categoryBadgeStyle}
+          >
+            {category}
+          </span>
         </div>
 
 
-        {/* =================================================
-            DESCRIPTION
-        ================================================= */}
+        <DetailRow
+          label="Location"
+          value={
+            issue.Location ||
+            issue.LocationName ||
+            'Location unavailable'
+          }
+        />
 
-        {issue.Description && (
+        <DetailRow
+          label="Assigned / reported"
+          value={
+            issue.CreatedAt
+              ? formatSADateTime(issue.CreatedAt)
+              : 'Unknown'
+          }
+        />
+
+        <DetailRow
+          label="Worker"
+          value={
+            issue.WorkerName ||
+            'Assigned to your account'
+          }
+        />
+
+
+        <div
+          style={{
+            marginTop: 20
+          }}
+        >
           <div
             style={{
-              marginBottom: 20
+              fontSize: 12,
+              fontWeight: 700,
+              marginBottom: 8,
+              color: 'var(--text-secondary)',
+              textTransform: 'uppercase'
             }}
           >
-
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                marginBottom: 6
-              }}
-            >
-              Description
-            </div>
-
-
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13.5,
-                color: '#475569',
-                lineHeight: 1.5,
-                wordBreak: 'break-word'
-              }}
-            >
-              {issue.Description}
-            </p>
-
+            Description
           </div>
-        )}
+
+          <p
+            style={{
+              fontSize: 13,
+              lineHeight: 1.6,
+              margin: 0,
+              color: 'var(--text-secondary)'
+            }}
+          >
+            {issue.Description ||
+              'No description provided.'}
+          </p>
+        </div>
 
 
-        {/* =================================================
-            PHOTOS
-        ================================================= */}
-
-        <div>
-
+        <div
+          style={{
+            marginTop: 22
+          }}
+        >
           <div
             style={{
               display: 'flex',
@@ -1218,52 +853,33 @@ function IssueDetailModal({
               fontSize: 12,
               fontWeight: 700,
               marginBottom: 10,
-              color: '#64748b',
+              color: 'var(--text-secondary)',
               textTransform: 'uppercase'
             }}
           >
-
             <ImageIcon size={14} />
-
-            <span>
-              Photos
-            </span>
-
+            Report Photos
             {photos.length > 0 && (
-              <span>
-                ({photos.length})
-              </span>
+              <span>({photos.length})</span>
             )}
-
           </div>
 
 
-          {/* NO PHOTOS */}
-
           {photos.length === 0 ? (
-
             <div
               style={{
-                padding: 20,
-                textAlign: 'center',
-                border:
-                  '1px dashed #e2e8f0',
-                borderRadius: 10,
+                padding: 14,
+                border: '1px dashed var(--border)',
+                borderRadius: 8,
                 color: '#94a3b8',
-                fontSize: 13
+                fontSize: 13,
+                textAlign: 'center'
               }}
             >
               No photos attached to this report.
             </div>
-
           ) : (
-
             <div>
-
-              {/* =================================================
-                  MAIN PHOTO
-              ================================================= */}
-
               <div
                 style={{
                   position: 'relative',
@@ -1276,7 +892,6 @@ function IssueDetailModal({
                       : 0
                 }}
               >
-
                 <img
                   src={getPhotoUrl(
                     photos[photoIndex]
@@ -1286,121 +901,64 @@ function IssueDetailModal({
                   }`}
                   style={{
                     width: '100%',
-                    height:
-                      'clamp(160px, 45vw, 260px)',
+                    height: 'clamp(180px, 45vw, 300px)',
                     objectFit: 'cover',
                     display: 'block'
                   }}
-                  onError={(e) => {
-                    e.currentTarget.style.display =
-                      'none';
-                  }}
                 />
-
-
-                {/* =================================================
-                    PREVIOUS / NEXT
-                ================================================= */}
 
                 {photos.length > 1 && (
                   <>
-
                     <button
                       type="button"
                       aria-label="Previous photo"
                       onClick={() =>
                         setPhotoIndex(
-                          (i) =>
-                            i === 0
+                          (index) =>
+                            index === 0
                               ? photos.length - 1
-                              : i - 1
+                              : index - 1
                         )
                       }
-                      style={{
-                        position: 'absolute',
-                        left: 8,
-                        top: '50%',
-                        transform:
-                          'translateY(-50%)',
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        border: 'none',
-                        background:
-                          'rgba(255,255,255,0.9)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
+                      style={photoNavButtonStyle('left')}
                     >
                       <ChevronLeft size={18} />
                     </button>
-
 
                     <button
                       type="button"
                       aria-label="Next photo"
                       onClick={() =>
                         setPhotoIndex(
-                          (i) =>
-                            i === photos.length - 1
+                          (index) =>
+                            index === photos.length - 1
                               ? 0
-                              : i + 1
+                              : index + 1
                         )
                       }
-                      style={{
-                        position: 'absolute',
-                        right: 8,
-                        top: '50%',
-                        transform:
-                          'translateY(-50%)',
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        border: 'none',
-                        background:
-                          'rgba(255,255,255,0.9)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
+                      style={photoNavButtonStyle('right')}
                     >
                       <ChevronRight size={18} />
                     </button>
-
-
-                    {/* PHOTO COUNTER */}
 
                     <span
                       style={{
                         position: 'absolute',
                         bottom: 8,
                         right: 8,
-                        background:
-                          'rgba(0,0,0,0.6)',
+                        background: 'rgba(0,0,0,0.6)',
                         color: 'white',
                         fontSize: 11,
                         padding: '3px 8px',
                         borderRadius: 6
                       }}
                     >
-                      {photoIndex + 1} /{' '}
-                      {photos.length}
+                      {photoIndex + 1} / {photos.length}
                     </span>
-
                   </>
                 )}
-
               </div>
 
-
-              {/* =================================================
-                  PHOTO THUMBNAILS
-              ================================================= */}
 
               {photos.length > 1 && (
                 <div
@@ -1411,65 +969,46 @@ function IssueDetailModal({
                     padding: '2px 0'
                   }}
                 >
-
-                  {photos.map(
-                    (photo, i) => (
-                      <button
-                        type="button"
-                        key={`${photo}-${i}`}
-                        aria-label={`View photo ${
-                          i + 1
-                        }`}
-                        onClick={() =>
-                          setPhotoIndex(i)
-                        }
+                  {photos.map((photo, index) => (
+                    <button
+                      type="button"
+                      key={`${photo}-${index}`}
+                      aria-label={`View photo ${index + 1}`}
+                      onClick={() =>
+                        setPhotoIndex(index)
+                      }
+                      style={{
+                        width: 56,
+                        height: 44,
+                        flexShrink: 0,
+                        padding: 0,
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        border:
+                          index === photoIndex
+                            ? '2px solid var(--navy-800)'
+                            : '2px solid transparent'
+                      }}
+                    >
+                      <img
+                        src={getPhotoUrl(photo)}
+                        alt={`Thumbnail ${index + 1}`}
                         style={{
-                          width:
-                            'clamp(46px, 14vw, 56px)',
-                          height:
-                            'clamp(36px, 11vw, 44px)',
-                          flexShrink: 0,
-                          padding: 0,
-                          borderRadius: 6,
-                          overflow: 'hidden',
-                          cursor: 'pointer',
-                          border:
-                            i === photoIndex
-                              ? '2px solid var(--navy-800)'
-                              : '2px solid transparent'
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block'
                         }}
-                      >
-
-                        <img
-                          src={getPhotoUrl(
-                            photo
-                          )}
-                          alt={`Thumbnail ${
-                            i + 1
-                          }`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block'
-                          }}
-                        />
-
-                      </button>
-                    )
-                  )}
-
+                      />
+                    </button>
+                  ))}
                 </div>
               )}
-
             </div>
-
           )}
-
         </div>
-
       </div>
-
     </div>
   );
 }
@@ -1483,7 +1022,6 @@ function LocationMapModal({
   report,
   onClose
 }) {
-
   const latitude = Number(
     report.Latitude
   );
@@ -1493,30 +1031,12 @@ function LocationMapModal({
   );
 
 
-  /*
-   * No coordinates.
-   */
   if (
     !Number.isFinite(latitude) ||
     !Number.isFinite(longitude)
   ) {
-
     return (
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1000,
-          background:
-            'rgba(15, 33, 54, 0.55)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 20
-        }}
-        onClick={onClose}
-      >
-
+      <ModalBackdrop onClose={onClose}>
         <div
           className="card"
           style={{
@@ -1528,151 +1048,58 @@ function LocationMapModal({
             e.stopPropagation()
           }
         >
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-
-            <strong>
-              Issue Location
-            </strong>
-
-
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                marginLeft: 'auto',
-                background: 'none',
-                border: 'none',
-                color:
-                  'var(--text-secondary)',
-                cursor: 'pointer'
-              }}
-            >
-              <X size={20} />
-            </button>
-
-          </div>
-
+          <ModalHeader
+            title="Issue Location"
+            onClose={onClose}
+          />
 
           <p
             style={{
               fontSize: 13,
-              color:
-                'var(--text-secondary)',
+              color: 'var(--text-secondary)',
               marginTop: 16
             }}
           >
-            Location coordinates are not
-            available for this issue.
+            Location coordinates are not available for this issue.
           </p>
-
         </div>
-
-      </div>
+      </ModalBackdrop>
     );
   }
 
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        background:
-          'rgba(15, 33, 54, 0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20
-      }}
-      onClick={onClose}
-    >
-
+    <ModalBackdrop onClose={onClose}>
       <div
         className="card"
         style={{
           width: 560,
           maxWidth: '100%',
           overflow: 'hidden',
-          boxShadow:
-            'var(--shadow-modal)'
+          boxShadow: 'var(--shadow-modal)'
         }}
         onClick={(e) =>
           e.stopPropagation()
         }
       >
-
-        {/* =================================================
-            MAP MODAL HEADER
-        ================================================= */}
-
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
             padding: '16px 20px',
-            borderBottom:
-              '1px solid var(--border)'
+            borderBottom: '1px solid var(--border)'
           }}
         >
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontWeight: 700,
-              fontSize: 15
-            }}
-          >
-
-            <MapPin
-              size={18}
-              color="#ef4444"
-            />
-
-            Issue Location
-
-          </div>
-
-
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              marginLeft: 'auto',
-              background: 'none',
-              border: 'none',
-              color:
-                'var(--text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <X size={20} />
-          </button>
-
+          <ModalHeader
+            title="Issue Location"
+            onClose={onClose}
+          />
         </div>
 
-
-        {/* =================================================
-            REPORT INFORMATION
-        ================================================= */}
 
         <div
           style={{
             padding: '14px 20px 10px'
           }}
         >
-
           <div
             style={{
               fontWeight: 700,
@@ -1680,28 +1107,21 @@ function LocationMapModal({
               marginBottom: 4
             }}
           >
-            {report.Title}
+            {report.Title || 'Untitled issue'}
           </div>
-
 
           <div
             style={{
               fontSize: 12,
-              color:
-                'var(--text-secondary)'
+              color: 'var(--text-secondary)'
             }}
           >
             {report.Location ||
               report.LocationName ||
               'Location unavailable'}
           </div>
-
         </div>
 
-
-        {/* =================================================
-            MAP
-        ================================================= */}
 
         <div
           style={{
@@ -1709,7 +1129,6 @@ function LocationMapModal({
             width: '100%'
           }}
         >
-
           <MapContainer
             center={[
               latitude,
@@ -1721,12 +1140,10 @@ function LocationMapModal({
               width: '100%'
             }}
           >
-
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-
 
             <Marker
               position={[
@@ -1734,37 +1151,199 @@ function LocationMapModal({
                 longitude
               ]}
             />
-
           </MapContainer>
-
         </div>
 
-
-        {/* =================================================
-            COORDINATES
-        ================================================= */}
 
         <div
           style={{
             padding: '12px 20px',
             fontSize: 11,
-            color:
-              'var(--text-secondary)',
-            borderTop:
-              '1px solid var(--border)'
+            color: 'var(--text-secondary)',
+            borderTop: '1px solid var(--border)'
           }}
         >
-
           Coordinates:{' '}
-
           {latitude.toFixed(6)},{' '}
-
           {longitude.toFixed(6)}
-
         </div>
-
       </div>
+    </ModalBackdrop>
+  );
+}
 
+
+/* =============================================================
+   SMALL UI HELPERS
+============================================================= */
+
+function DetailRow({
+  label,
+  value
+}) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '140px 1fr',
+        gap: 12,
+        padding: '9px 0',
+        borderBottom: '1px solid var(--border)',
+        fontSize: 13
+      }}
+    >
+      <span
+        style={{
+          color: 'var(--text-secondary)',
+          fontWeight: 600
+        }}
+      >
+        {label}
+      </span>
+
+      <span>
+        {value}
+      </span>
     </div>
   );
 }
+
+
+function ModalBackdrop({
+  children,
+  onClose
+}) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        background: 'rgba(15, 33, 54, 0.55)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20
+      }}
+      onClick={onClose}
+    >
+      {children}
+    </div>
+  );
+}
+
+
+function ModalHeader({
+  title,
+  onClose
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center'
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontWeight: 700,
+          fontSize: 15
+        }}
+      >
+        <MapPin
+          size={18}
+          color="#ef4444"
+        />
+        {title}
+      </div>
+
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        style={{
+          marginLeft: 'auto',
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <X size={20} />
+      </button>
+    </div>
+  );
+}
+
+
+function photoNavButtonStyle(side) {
+  return {
+    position: 'absolute',
+    [side]: 8,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    border: 'none',
+    background: 'rgba(255,255,255,0.9)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer'
+  };
+}
+
+
+function priorityBadgeStyle(priority) {
+  const map = {
+    Low: {
+      bg: '#f1f5f9',
+      color: '#475569'
+    },
+    Medium: {
+      bg: '#fef3c7',
+      color: '#92400e'
+    },
+    High: {
+      bg: '#ffedd5',
+      color: '#9a3412'
+    },
+    Critical: {
+      bg: '#fee2e2',
+      color: '#991b1b'
+    }
+  };
+
+  const selected =
+    map[priority] || {
+      bg: '#f1f5f9',
+      color: '#475569'
+    };
+
+  return {
+    padding: '4px 10px',
+    borderRadius: 999,
+    fontSize: 11.5,
+    fontWeight: 700,
+    background: selected.bg,
+    color: selected.color,
+    textTransform: 'capitalize'
+  };
+}
+
+
+const categoryBadgeStyle = {
+  padding: '4px 10px',
+  borderRadius: 999,
+  fontSize: 11.5,
+  fontWeight: 700,
+  background: '#ede9fe',
+  color: '#5b21b6'
+};

@@ -10,9 +10,6 @@ import {
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
-import TermsOfService from "../pages/public/TermsOfService";
-import PrivacyPolicy from "../pages/public/PrivacyPolicy";
-
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -88,25 +85,25 @@ export default function Footer() {
 
           <h3>Quick Links</h3>
 
-          <a href="/#home">
+          <Link to="/#home">
             Home
-          </a>
+          </Link>
 
-          <a href="/#about">
+          <Link to="/#about">
             About
-          </a>
+          </Link>
 
-          <a href="/#services">
+          <Link to="/#services">
             Services
-          </a>
+          </Link>
 
-          <a href="/#statistics">
+          <Link to="/#statistics">
             Statistics
-          </a>
+          </Link>
 
-          <a href="/#contact">
+          <Link to="/#contact">
             Contact
-          </a>
+          </Link>
 
         </div>
 
@@ -116,25 +113,25 @@ export default function Footer() {
 
           <h3>Services</h3>
 
-          <a href="/login?mode=register">
+          <Link to="/login?mode=register">
             Report an Issue
-          </a>
+          </Link>
 
-          <a href="/login">
+          <Link to="/login">
             Track Reports
-          </a>
+          </Link>
 
-          <a href="/#home">
+          <Link to="/#home">
             Municipality Map
-          </a>
+          </Link>
 
-          <a href="/#statistics">
+          <Link to="/#statistics">
             Community Updates
-          </a>
+          </Link>
 
-          <a href="/#contact">
+          <Link to="/#contact">
             Help Centre
-          </a>
+          </Link>
 
         </div>
 
@@ -172,11 +169,11 @@ export default function Footer() {
         </p>
 
         <div className="footer-bottom-links">
-          <Link to="/privacy-policy" element={<PrivacyPolicy />}>
+          <Link to="/privacy-policy">
             Privacy Policy
           </Link>
 
-          <Link to="/terms-of-service" element={<TermsOfService />}>
+          <Link to="/terms-of-service">
             Terms of Service
           </Link>
 

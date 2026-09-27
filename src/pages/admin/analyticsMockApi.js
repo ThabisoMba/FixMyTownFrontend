@@ -1,624 +1,197 @@
+import realApi from '../../api/api';
+
+
 /*
  * ============================================================
- * FIX MY TOWN - ANALYTICS MOCK API
+ * FIX MY TOWN - ANALYTICS FRONTEND DATA ADAPTER
  * ============================================================
  *
- * Temporary frontend-only analytics data source.
+ * Analytics.jsx still talks to this file as though it were
+ * talking to:
  *
- * This file deliberately mimics the small part of Axios used by
- * Analytics.jsx:
+ *   GET /admin/analytics
+ *   GET /lookups/categories
+ *   GET /lookups/locations
  *
- *   api.get('/admin/analytics', { params })
- *   api.get('/lookups/categories')
- *   api.get('/lookups/locations')
+ * But this adapter now builds analytics from REAL data that
+ * already exists in the deployed backend:
  *
- * No backend request is made.
+ *   GET /admin/reports
+ *   GET /admin/workers
  *
- * The mock data is internally consistent:
+ * Report details are also used for resolution-time calculations.
  *
- * - TotalIssues comes from the filtered reports
- * - ResolutionRate comes from resolved / total
- * - AvgResponseHours comes from matching reports
- * - AvgResolutionDays comes from matching resolved reports
- * - byCategory comes from the same filtered reports
- * - byLocation comes from the same filtered reports
- *
- * The report dates are relative to the current date so:
- *
- * - Today
- * - Last 7 Days
- * - Last 30 Days
- * - Last 90 Days
- *
- * continue to work during the demo.
+ * Nothing in this file contains fake report totals, fake workers,
+ * fake categories, fake locations, or fake chart values.
  * ============================================================
  */
 
 
 /* ============================================================
-   CATEGORIES
+   CACHE
+
+   Analytics.jsx requests analytics + two lookup endpoints at
+   almost the same time.
+
+   This tiny cache prevents that from producing three identical
+   /admin/reports requests during initial page load.
+
+   After a few seconds the next refresh gets fresh server data.
 ============================================================ */
 
-const MOCK_CATEGORIES = [
-  {
-    CategoryID: 1,
-    Name: 'Electricity'
-  },
-  {
-    CategoryID: 2,
-    Name: 'Graffiti'
-  },
-  {
-    CategoryID: 3,
-    Name: 'Other'
-  },
-  {
-    CategoryID: 4,
-    Name: 'Parks'
-  },
-  {
-    CategoryID: 5,
-    Name: 'Pothole'
-  },
-  {
-    CategoryID: 6,
-    Name: 'Public Safety'
-  },
-  {
-    CategoryID: 7,
-    Name: 'Sanitation'
-  },
-  {
-    CategoryID: 8,
-    Name: 'Street Light'
-  },
-  {
-    CategoryID: 9,
-    Name: 'Waste Management'
-  },
-  {
-    CategoryID: 10,
-    Name: 'Water Supply'
-  }
-];
+const CACHE_DURATION_MS = 3000;
 
+let baseDataCache = null;
 
-/* ============================================================
-   LOCATIONS
-============================================================ */
+let baseDataPromise = null;
 
-const MOCK_LOCATIONS = [
-  {
-    LocationID: 1,
-    Name: 'Gqeberha'
-  },
-  {
-    LocationID: 2,
-    Name: 'KuGompo City'
-  },
-  {
-    LocationID: 3,
-    Name: 'KwaZulu-Natal'
-  },
-  {
-    LocationID: 4,
-    Name: 'Long Street'
-  },
-  {
-    LocationID: 5,
-    Name: 'Main Street near post office'
-  },
-  {
-    LocationID: 6,
-    Name: 'Midvaal Local Municipality'
-  },
-  {
-    LocationID: 7,
-    Name: 'Mohokare Local Municipality'
-  },
-  {
-    LocationID: 8,
-    Name: 'Newcastle Local Municipality'
-  },
-  {
-    LocationID: 9,
-    Name: 'Ngagane, Newcastle Local Municipality'
-  },
-  {
-    LocationID: 10,
-    Name: 'Oak Road near school'
-  },
-  {
-    LocationID: 11,
-    Name: 'Queensburgh'
-  },
-  {
-    LocationID: 12,
-    Name: 'Smith Street'
-  },
-  {
-    LocationID: 13,
-    Name: 'Sol Plaatje Local Municipality'
-  },
-  {
-    LocationID: 14,
-    Name: 'Tswelopele Local Municipality'
-  },
-  {
-    LocationID: 15,
-    Name: 'Zone 3 park area'
-  },
-  {
-    LocationID: 16,
-    Name: 'iBhayi'
-  },
-  {
-    LocationID: 17,
-    Name: 'Karas'
-  },
-  {
-    LocationID: 18,
-    Name: '5th Avenue near library'
-  },
-  {
-    LocationID: 19,
-    Name: 'Chakaskraal, KwaDukuza Local Municipality'
-  },
-  {
-    LocationID: 20,
-    Name: 'Elias Motsoaledi Local Municipality'
-  }
-];
+let baseDataExpiresAt = 0;
 
-
-/* ============================================================
-   REPORT FIXTURES
-============================================================ */
 
 /*
- * daysAgo is relative to the current browser date.
+ * Report detail cache.
  *
- * This makes the date filters stay useful instead of becoming
- * stale after the demo date changes.
- *
- * The full unfiltered fixture intentionally contains:
- *
- *   34 reports
- *   10 resolved
- *   Resolution rate = 29%
- *   Average resolution = 4.3 days
- *   8 active workers
- *
- * These values are derived from the rows below. They are not
- * separately hard-coded into the response.
+ * Used when calculating average resolution time.
  */
+const detailCache =
+  new Map();
 
-const MOCK_REPORT_SPECS = [
-  {
-    id: 1,
-    categoryId: 1,
-    locationId: 1,
-    daysAgo: 0,
-    status: 'Resolved',
-    responseHours: 1.2,
-    resolutionDays: 2.4
-  },
-
-  {
-    id: 2,
-    categoryId: 8,
-    locationId: 3,
-    daysAgo: 0,
-    status: 'Assigned',
-    responseHours: 0.7,
-    resolutionDays: null
-  },
-
-  {
-    id: 3,
-    categoryId: 10,
-    locationId: 1,
-    daysAgo: 0,
-    status: 'InProgress',
-    responseHours: 1.5,
-    resolutionDays: null
-  },
-
-  {
-    id: 4,
-    categoryId: 8,
-    locationId: 2,
-    daysAgo: 1,
-    status: 'Resolved',
-    responseHours: 0.8,
-    resolutionDays: 1.5
-  },
-
-  {
-    id: 5,
-    categoryId: 5,
-    locationId: 4,
-    daysAgo: 2,
-    status: 'Resolved',
-    responseHours: 2.2,
-    resolutionDays: 2.8
-  },
-
-  {
-    id: 6,
-    categoryId: 2,
-    locationId: 16,
-    daysAgo: 3,
-    status: 'Reported',
-    responseHours: null,
-    resolutionDays: null
-  },
-
-  {
-    id: 7,
-    categoryId: 8,
-    locationId: 5,
-    daysAgo: 4,
-    status: 'Assigned',
-    responseHours: 1.1,
-    resolutionDays: null
-  },
-
-  {
-    id: 8,
-    categoryId: 10,
-    locationId: 8,
-    daysAgo: 5,
-    status: 'Resolved',
-    responseHours: 1.7,
-    resolutionDays: 5.2
-  },
-
-  {
-    id: 9,
-    categoryId: 1,
-    locationId: 3,
-    daysAgo: 6,
-    status: 'Assigned',
-    responseHours: 0.5,
-    resolutionDays: null
-  },
-
-  {
-    id: 10,
-    categoryId: 4,
-    locationId: 15,
-    daysAgo: 8,
-    status: 'InProgress',
-    responseHours: 2.5,
-    resolutionDays: null
-  },
-
-  {
-    id: 11,
-    categoryId: 5,
-    locationId: 1,
-    daysAgo: 10,
-    status: 'Assigned',
-    responseHours: 1.3,
-    resolutionDays: null
-  },
-
-  {
-    id: 12,
-    categoryId: 8,
-    locationId: 12,
-    daysAgo: 12,
-    status: 'Resolved',
-    responseHours: 0.6,
-    resolutionDays: 3.1
-  },
-
-  {
-    id: 13,
-    categoryId: 9,
-    locationId: 13,
-    daysAgo: 14,
-    status: 'Reported',
-    responseHours: null,
-    resolutionDays: null
-  },
-
-  {
-    id: 14,
-    categoryId: 10,
-    locationId: 11,
-    daysAgo: 17,
-    status: 'Assigned',
-    responseHours: 2.1,
-    resolutionDays: null
-  },
-
-  {
-    id: 15,
-    categoryId: 5,
-    locationId: 10,
-    daysAgo: 20,
-    status: 'Resolved',
-    responseHours: 3.4,
-    resolutionDays: 3.2
-  },
-
-  {
-    id: 16,
-    categoryId: 7,
-    locationId: 1,
-    daysAgo: 23,
-    status: 'InProgress',
-    responseHours: 1.8,
-    resolutionDays: null
-  },
-
-  {
-    id: 17,
-    categoryId: 8,
-    locationId: 17,
-    daysAgo: 27,
-    status: 'Assigned',
-    responseHours: 0.9,
-    resolutionDays: null
-  },
-
-  {
-    id: 18,
-    categoryId: 6,
-    locationId: 3,
-    daysAgo: 29,
-    status: 'Assigned',
-    responseHours: 1.4,
-    resolutionDays: null
-  },
-
-  {
-    id: 19,
-    categoryId: 1,
-    locationId: 7,
-    daysAgo: 35,
-    status: 'InProgress',
-    responseHours: 2.7,
-    resolutionDays: null
-  },
-
-  {
-    id: 20,
-    categoryId: 10,
-    locationId: 6,
-    daysAgo: 42,
-    status: 'Assigned',
-    responseHours: 1.9,
-    resolutionDays: null
-  },
-
-  {
-    id: 21,
-    categoryId: 8,
-    locationId: 18,
-    daysAgo: 50,
-    status: 'Assigned',
-    responseHours: 0.7,
-    resolutionDays: null
-  },
-
-  {
-    id: 22,
-    categoryId: 4,
-    locationId: 20,
-    daysAgo: 58,
-    status: 'Resolved',
-    responseHours: 2.3,
-    resolutionDays: 7.4
-  },
-
-  {
-    id: 23,
-    categoryId: 5,
-    locationId: 8,
-    daysAgo: 67,
-    status: 'Assigned',
-    responseHours: 1.6,
-    resolutionDays: null
-  },
-
-  {
-    id: 24,
-    categoryId: 2,
-    locationId: 1,
-    daysAgo: 74,
-    status: 'Reported',
-    responseHours: null,
-    resolutionDays: null
-  },
-
-  {
-    id: 25,
-    categoryId: 8,
-    locationId: 14,
-    daysAgo: 82,
-    status: 'Resolved',
-    responseHours: 1.1,
-    resolutionDays: 4.6
-  },
-
-  {
-    id: 26,
-    categoryId: 10,
-    locationId: 19,
-    daysAgo: 89,
-    status: 'Resolved',
-    responseHours: 1.8,
-    resolutionDays: 6.1
-  },
-
-  {
-    id: 27,
-    categoryId: 9,
-    locationId: 9,
-    daysAgo: 95,
-    status: 'InProgress',
-    responseHours: 2.9,
-    resolutionDays: null
-  },
-
-  {
-    id: 28,
-    categoryId: 7,
-    locationId: 2,
-    daysAgo: 103,
-    status: 'Resolved',
-    responseHours: 2.4,
-    resolutionDays: 6.7
-  },
-
-  {
-    id: 29,
-    categoryId: 3,
-    locationId: 3,
-    daysAgo: 112,
-    status: 'Reported',
-    responseHours: null,
-    resolutionDays: null
-  },
-
-  {
-    id: 30,
-    categoryId: 1,
-    locationId: 1,
-    daysAgo: 121,
-    status: 'Assigned',
-    responseHours: 0.4,
-    resolutionDays: null
-  },
-
-  {
-    id: 31,
-    categoryId: 5,
-    locationId: 7,
-    daysAgo: 135,
-    status: 'Assigned',
-    responseHours: 1.2,
-    resolutionDays: null
-  },
-
-  {
-    id: 32,
-    categoryId: 8,
-    locationId: 13,
-    daysAgo: 150,
-    status: 'Assigned',
-    responseHours: 0.8,
-    resolutionDays: null
-  },
-
-  {
-    id: 33,
-    categoryId: 4,
-    locationId: 16,
-    daysAgo: 175,
-    status: 'Assigned',
-    responseHours: 2.0,
-    resolutionDays: null
-  },
-
-  {
-    id: 34,
-    categoryId: 10,
-    locationId: 5,
-    daysAgo: 210,
-    status: 'Reported',
-    responseHours: null,
-    resolutionDays: null
-  }
-];
+const DETAIL_CACHE_DURATION_MS =
+  30000;
 
 
 /* ============================================================
-   WORKERS
-============================================================ */
-
-const TOTAL_ACTIVE_WORKERS = 8;
-
-
-/* ============================================================
-   PUBLIC MOCK API
+   PUBLIC ADAPTER
 ============================================================ */
 
 const analyticsMockApi = {
-  async get(path, config = {}) {
-    /*
-     * Small delay so Analytics.jsx behaves like it is receiving
-     * a normal asynchronous response.
-     */
-    await delay(120);
-
+  async get(
+    path,
+    config = {}
+  ) {
 
     /* ========================================================
        CATEGORY LOOKUP
+
+       Do not hard-code categories.
+
+       Get the real reports and extract the unique categories
+       already present in the system.
     ======================================================== */
 
-    if (path === '/lookups/categories') {
+    if (
+      path ===
+      '/lookups/categories'
+    ) {
+      const {
+        reports
+      } =
+        await loadBaseData();
+
       return {
-        data: MOCK_CATEGORIES.map((item) => ({
-          ...item
-        }))
+        data:
+          buildCategoryLookup(
+            reports
+          )
       };
     }
 
 
     /* ========================================================
        LOCATION LOOKUP
+
+       Same principle: locations already exist in the reports,
+       so there is no reason to maintain a second hard-coded list.
     ======================================================== */
 
-    if (path === '/lookups/locations') {
+    if (
+      path ===
+      '/lookups/locations'
+    ) {
+      const {
+        reports
+      } =
+        await loadBaseData();
+
       return {
-        data: MOCK_LOCATIONS.map((item) => ({
-          ...item
-        }))
+        data:
+          buildLocationLookup(
+            reports
+          )
       };
     }
 
 
     /* ========================================================
        ANALYTICS
+
+       Build the analytics response from existing real endpoints.
     ======================================================== */
 
-    if (path === '/admin/analytics') {
+    if (
+      path ===
+      '/admin/analytics'
+    ) {
       const params =
-        config?.params || {};
+        config?.params ||
+        {};
 
-      const response =
-        buildAnalyticsResponse(
-          params
+      const {
+        reports,
+        workers
+      } =
+        await loadBaseData();
+
+
+      const filteredReports =
+        reports.filter(
+          (report) =>
+            matchesAnalyticsFilters(
+              report,
+              params
+            )
         );
 
-      /*
-       * Useful during your demonstration:
-       *
-       * Open DevTools -> Console and you will see both the
-       * applied filters and the generated analytics response.
-       */
+
+      const response =
+        await buildAnalyticsResponse(
+          filteredReports,
+          workers
+        );
+
+
       console.log(
-        '[Analytics Mock] filters:',
+        '[Analytics] filters:',
         params
       );
 
       console.log(
-        '[Analytics Mock] response:',
+        '[Analytics] reports:',
+        filteredReports
+      );
+
+      console.log(
+        '[Analytics] response:',
         response
       );
 
+
       return {
-        data: response
+        data:
+          response
       };
     }
 
 
-    throw new Error(
-      `Analytics mock API does not support: ${path}`
+    /*
+     * Pass through anything else to the normal Axios API.
+     *
+     * This keeps this adapter safe if Analytics.jsx later adds
+     * another normal API request.
+     */
+    return realApi.get(
+      path,
+      config
     );
   }
 };
@@ -628,149 +201,283 @@ export default analyticsMockApi;
 
 
 /* ============================================================
-   RESPONSE BUILDER
+   LOAD REAL BASE DATA
 ============================================================ */
 
-function buildAnalyticsResponse(
-  params
+async function loadBaseData() {
+  const now =
+    Date.now();
+
+
+  if (
+    baseDataCache &&
+    now <
+      baseDataExpiresAt
+  ) {
+    return baseDataCache;
+  }
+
+
+  /*
+   * If another request is already loading the data,
+   * share the same promise instead of requesting it again.
+   */
+  if (
+    baseDataPromise
+  ) {
+    return baseDataPromise;
+  }
+
+
+  baseDataPromise =
+    Promise.all([
+      realApi.get(
+        '/admin/reports'
+      ),
+
+      realApi.get(
+        '/admin/workers'
+      )
+    ])
+      .then(
+        ([
+          reportsResponse,
+          workersResponse
+        ]) => {
+
+          const reports =
+            Array.isArray(
+              reportsResponse.data
+            )
+              ? reportsResponse.data
+                  .map(
+                    normaliseReport
+                  )
+                  .filter(Boolean)
+              : [];
+
+
+          const workers =
+            Array.isArray(
+              workersResponse.data
+            )
+              ? workersResponse.data
+              : [];
+
+
+          baseDataCache = {
+            reports,
+            workers
+          };
+
+
+          baseDataExpiresAt =
+            Date.now() +
+            CACHE_DURATION_MS;
+
+
+          return baseDataCache;
+        }
+      )
+      .finally(
+        () => {
+          baseDataPromise =
+            null;
+        }
+      );
+
+
+  return baseDataPromise;
+}
+
+
+/* ============================================================
+   ANALYTICS RESPONSE
+============================================================ */
+
+async function buildAnalyticsResponse(
+  reports,
+  workers
 ) {
-  const reports =
-    createReports();
-
-  const filteredReports =
-    reports.filter(
-      (report) =>
-        matchesDateFilter(
-          report,
-          params
-        ) &&
-        matchesCategoryFilter(
-          report,
-          params
-        ) &&
-        matchesLocationFilter(
-          report,
-          params
-        )
-    );
-
 
   /* ========================================================
      TOTAL ISSUES
+
+     Derived from the actual filtered /admin/reports rows.
   ======================================================== */
 
   const totalIssues =
-    filteredReports.length;
+    reports.length;
 
 
   /* ========================================================
-     RESOLVED
+     RESOLVED REPORTS
   ======================================================== */
 
   const resolvedReports =
-    filteredReports.filter(
+    reports.filter(
       (report) =>
-        report.Status ===
+        normaliseStatus(
+          report.Status
+        ) ===
         'Resolved'
     );
+
 
   const resolvedCount =
     resolvedReports.length;
 
 
   /* ========================================================
-     RESPONSE TIME
+     RESOLUTION RATE
   ======================================================== */
 
-  const responseValues =
-    filteredReports
-      .map(
-        (report) =>
-          report.ResponseHours
-      )
-      .filter(
-        (value) =>
-          Number.isFinite(
-            value
-          )
-      );
+  const resolutionRate =
+    totalIssues === 0
+      ? 0
+      : Math.round(
+          (
+            resolvedCount /
+            totalIssues
+          ) *
+          100
+        );
+
+
+  /* ========================================================
+     ACTIVE MUNICIPAL WORKERS
+
+     /admin/workers includes active and inactive workers.
+
+     The Analytics KPI specifically says:
+       "Active municipal workers"
+
+     Therefore count only IsActive === true.
+  ======================================================== */
+
+  const totalWorkers =
+    workers.filter(
+      (worker) =>
+        getBooleanValue(
+          worker,
+          'IsActive',
+          'isActive'
+        ) === true
+    ).length;
+
+
+  /* ========================================================
+     AVERAGE RESPONSE TIME
+
+     This can only be calculated if /admin/reports exposes an
+     AssignedAt timestamp.
+
+     The restored backend currently may not expose that field.
+
+     We deliberately return null instead of inventing a value.
+     Analytics.jsx already renders null as "—".
+
+     If AssignedAt becomes available later, this starts working
+     automatically without changing Analytics.jsx.
+  ======================================================== */
 
   const avgResponseHours =
-    average(
-      responseValues
+    calculateAverageResponseHours(
+      reports
     );
 
 
   /* ========================================================
-     RESOLUTION TIME
+     AVERAGE RESOLUTION TIME
+
+     The report list does not expose ResolvedAt.
+
+     For resolved reports we therefore request the existing
+     report-details endpoint, which gives us UpdatedAt.
+
+     In your backend, UpdatedAt is set when report status changes,
+     so it is the best real frontend-accessible fallback for the
+     resolution timestamp.
+
+     If a future API exposes ResolvedAt, this code prefers it.
   ======================================================== */
 
-  const resolutionValues =
-    resolvedReports
-      .map(
-        (report) =>
-          report.ResolutionDays
-      )
-      .filter(
-        (value) =>
-          Number.isFinite(
-            value
-          )
-      );
-
   const avgResolutionDays =
-    average(
-      resolutionValues
+    await calculateAverageResolutionDays(
+      resolvedReports
     );
 
 
   /* ========================================================
-     CATEGORY COUNTS
+     ISSUES BY CATEGORY
   ======================================================== */
 
   const byCategory =
     groupReports(
-      filteredReports,
+      reports,
       (report) =>
         report.CategoryName
     )
       .map(
-        ([CategoryName, IssueCount]) => ({
+        ([
+          CategoryName,
+          IssueCount
+        ]) => ({
           CategoryName,
           IssueCount
         })
       )
-      .sort(sortCounts);
+      .sort(
+        (
+          first,
+          second
+        ) =>
+          second.IssueCount -
+            first.IssueCount ||
+          first.CategoryName
+            .localeCompare(
+              second.CategoryName
+            )
+      );
 
 
   /* ========================================================
-     LOCATION COUNTS
+     ISSUES BY LOCATION
   ======================================================== */
 
   const byLocation =
     groupReports(
-      filteredReports,
+      reports,
       (report) =>
         report.LocationName
     )
       .map(
-        ([LocationName, IssueCount]) => ({
+        ([
+          LocationName,
+          IssueCount
+        ]) => ({
           LocationName,
           IssueCount
         })
       )
       .sort(
-        (a, b) =>
-          b.IssueCount -
-            a.IssueCount ||
-          a.LocationName.localeCompare(
-            b.LocationName
-          )
+        (
+          first,
+          second
+        ) =>
+          second.IssueCount -
+            first.IssueCount ||
+          first.LocationName
+            .localeCompare(
+              second.LocationName
+            )
       );
 
 
   /* ========================================================
      FINAL RESPONSE
+
+     This has the exact shape Analytics.jsx already expects.
   ======================================================== */
 
   return {
@@ -778,32 +485,16 @@ function buildAnalyticsResponse(
       totalIssues,
 
     TotalWorkers:
-      TOTAL_ACTIVE_WORKERS,
+      totalWorkers,
 
     ResolutionRate:
-      totalIssues === 0
-        ? 0
-        : Math.round(
-            (
-              resolvedCount /
-              totalIssues
-            ) *
-            100
-          ),
+      resolutionRate,
 
     AvgResponseHours:
-      avgResponseHours === null
-        ? null
-        : roundToOne(
-            avgResponseHours
-          ),
+      avgResponseHours,
 
     AvgResolutionDays:
-      avgResolutionDays === null
-        ? null
-        : roundToOne(
-            avgResolutionDays
-          ),
+      avgResolutionDays,
 
     byCategory,
 
@@ -813,65 +504,132 @@ function buildAnalyticsResponse(
 
 
 /* ============================================================
-   CREATE FULL REPORT OBJECTS
+   NORMALISE REPORT
+
+   The project has used slightly different naming conventions
+   over time.
+
+   Normalising here makes the frontend work with either form.
 ============================================================ */
 
-function createReports() {
-  const today =
-    startOfLocalDay(
-      new Date()
-    );
+function normaliseReport(
+  report
+) {
+  if (
+    !report ||
+    typeof report !==
+      'object'
+  ) {
+    return null;
+  }
 
-  return MOCK_REPORT_SPECS.map(
-    (spec) => {
-      const category =
-        MOCK_CATEGORIES.find(
-          (item) =>
-            item.CategoryID ===
-            spec.categoryId
-        );
 
-      const location =
-        MOCK_LOCATIONS.find(
-          (item) =>
-            item.LocationID ===
-            spec.locationId
-        );
+  return {
+    ...report,
 
-      return {
-        ReportID:
-          spec.id,
+    ReportID:
+      report.ReportID ??
+      report.ReportId ??
+      report.reportID ??
+      report.reportId ??
+      null,
 
-        CategoryID:
-          spec.categoryId,
+    ReportCode:
+      report.ReportCode ??
+      report.ReferenceNumber ??
+      report.reportCode ??
+      report.referenceNumber ??
+      '',
 
-        CategoryName:
-          category?.Name ||
-          'Other',
+    Title:
+      report.Title ??
+      report.title ??
+      '',
 
-        LocationID:
-          spec.locationId,
+    Status:
+      normaliseStatus(
+        report.Status ??
+        report.status
+      ),
 
-        LocationName:
-          location?.Name ||
-          'Unknown',
+    Priority:
+      report.Priority ??
+      report.priority ??
+      '',
 
-        CreatedAt:
-          addDays(
-            today,
-            -spec.daysAgo
-          ),
+    CategoryID:
+      report.CategoryID ??
+      report.CategoryId ??
+      report.categoryID ??
+      report.categoryId ??
+      null,
 
-        Status:
-          spec.status,
+    CategoryName:
+      report.CategoryName ??
+      report.categoryName ??
+      '',
 
-        ResponseHours:
-          spec.responseHours,
+    LocationID:
+      report.LocationID ??
+      report.LocationId ??
+      report.locationID ??
+      report.locationId ??
+      null,
 
-        ResolutionDays:
-          spec.resolutionDays
-      };
-    }
+    LocationName:
+      report.LocationName ??
+      report.locationName ??
+      '',
+
+    WorkerName:
+      report.WorkerName ??
+      report.workerName ??
+      null,
+
+    CreatedAt:
+      report.CreatedAt ??
+      report.createdAt ??
+      null,
+
+    AssignedAt:
+      report.AssignedAt ??
+      report.assignedAt ??
+      null,
+
+    ResolvedAt:
+      report.ResolvedAt ??
+      report.resolvedAt ??
+      null,
+
+    UpdatedAt:
+      report.UpdatedAt ??
+      report.updatedAt ??
+      null
+  };
+}
+
+
+/* ============================================================
+   ANALYTICS FILTERS
+============================================================ */
+
+function matchesAnalyticsFilters(
+  report,
+  params
+) {
+  return (
+    matchesDateFilter(
+      report,
+      params
+    ) &&
+    matchesCategoryFilter(
+      report,
+      params
+    ) &&
+    matchesLocationFilter(
+      report,
+      params
+    )
   );
 }
 
@@ -884,10 +642,22 @@ function matchesDateFilter(
   report,
   params
 ) {
+  const createdAt =
+    parseDate(
+      report.CreatedAt
+    );
+
+
+  if (!createdAt) {
+    return false;
+  }
+
+
   const from =
     parseLocalDate(
       params.from
     );
+
 
   const to =
     parseLocalDate(
@@ -897,7 +667,8 @@ function matchesDateFilter(
 
   if (
     from &&
-    report.CreatedAt < from
+    createdAt <
+      from
   ) {
     return false;
   }
@@ -910,8 +681,9 @@ function matchesDateFilter(
         1
       );
 
+
     if (
-      report.CreatedAt >=
+      createdAt >=
       endExclusive
     ) {
       return false;
@@ -931,13 +703,17 @@ function matchesCategoryFilter(
   report,
   params
 ) {
+
+  /*
+   * If IDs are available in a future API response,
+   * support them.
+   */
   if (
-    params.categoryId !==
-      undefined &&
-    params.categoryId !==
+    params.categoryId &&
+    report.CategoryID !==
       null &&
-    params.categoryId !==
-      ''
+    report.CategoryID !==
+      undefined
   ) {
     return (
       String(
@@ -950,11 +726,14 @@ function matchesCategoryFilter(
   }
 
 
+  /*
+   * Current frontend-derived category options use names.
+   */
   if (
     params.category
   ) {
-    return (
-      report.CategoryName ===
+    return sameText(
+      report.CategoryName,
       params.category
     );
   }
@@ -973,12 +752,11 @@ function matchesLocationFilter(
   params
 ) {
   if (
-    params.locationId !==
-      undefined &&
-    params.locationId !==
+    params.locationId &&
+    report.LocationID !==
       null &&
-    params.locationId !==
-      ''
+    report.LocationID !==
+      undefined
   ) {
     return (
       String(
@@ -994,8 +772,8 @@ function matchesLocationFilter(
   if (
     params.location
   ) {
-    return (
-      report.LocationName ===
+    return sameText(
+      report.LocationName,
       params.location
     );
   }
@@ -1006,7 +784,372 @@ function matchesLocationFilter(
 
 
 /* ============================================================
-   GROUPING
+   CATEGORY LOOKUP
+
+   Generated from REAL report data.
+============================================================ */
+
+function buildCategoryLookup(
+  reports
+) {
+  const names =
+    uniqueStrings(
+      reports.map(
+        (report) =>
+          report.CategoryName
+      )
+    );
+
+
+  return names.map(
+    (name) => ({
+      /*
+       * Analytics.jsx supports a lookup without an ID.
+       *
+       * It will therefore send:
+       *
+       *   category=<name>
+       *
+       * rather than:
+       *
+       *   categoryId=<id>
+       */
+      CategoryID:
+        '',
+
+      Name:
+        name
+    })
+  );
+}
+
+
+/* ============================================================
+   LOCATION LOOKUP
+
+   Generated from REAL report data.
+============================================================ */
+
+function buildLocationLookup(
+  reports
+) {
+  const names =
+    uniqueStrings(
+      reports.map(
+        (report) =>
+          report.LocationName
+      )
+    );
+
+
+  return names.map(
+    (name) => ({
+      LocationID:
+        '',
+
+      Name:
+        name
+    })
+  );
+}
+
+
+/* ============================================================
+   AVERAGE RESPONSE TIME
+============================================================ */
+
+function calculateAverageResponseHours(
+  reports
+) {
+  const values =
+    reports
+      .map(
+        (report) => {
+          const createdAt =
+            parseDate(
+              report.CreatedAt
+            );
+
+
+          const assignedAt =
+            parseDate(
+              report.AssignedAt
+            );
+
+
+          if (
+            !createdAt ||
+            !assignedAt ||
+            assignedAt <
+              createdAt
+          ) {
+            return null;
+          }
+
+
+          return (
+            assignedAt.getTime() -
+            createdAt.getTime()
+          ) /
+          (
+            1000 *
+            60 *
+            60
+          );
+        }
+      )
+      .filter(
+        Number.isFinite
+      );
+
+
+  if (
+    values.length ===
+    0
+  ) {
+    /*
+     * No fake response-time number.
+     *
+     * Analytics.jsx will render this as "—".
+     */
+    return null;
+  }
+
+
+  return roundToOne(
+    average(
+      values
+    )
+  );
+}
+
+
+/* ============================================================
+   AVERAGE RESOLUTION TIME
+============================================================ */
+
+async function calculateAverageResolutionDays(
+  resolvedReports
+) {
+  if (
+    resolvedReports.length ===
+    0
+  ) {
+    return null;
+  }
+
+
+  const durations =
+    await Promise.all(
+      resolvedReports.map(
+        async (
+          report
+        ) => {
+          const detail =
+            await loadReportDetail(
+              report
+            );
+
+
+          /*
+           * Use the detail response where possible.
+           *
+           * Prefer ResolvedAt if a newer backend eventually
+           * exposes it.
+           */
+          const createdAt =
+            parseDate(
+              detail?.CreatedAt ??
+              detail?.createdAt ??
+              report.CreatedAt
+            );
+
+
+          const resolvedAt =
+            parseDate(
+              detail?.ResolvedAt ??
+              detail?.resolvedAt ??
+              report.ResolvedAt
+            );
+
+
+          const updatedAt =
+            parseDate(
+              detail?.UpdatedAt ??
+              detail?.updatedAt ??
+              report.UpdatedAt
+            );
+
+
+          const finishedAt =
+            resolvedAt ||
+            updatedAt;
+
+
+          if (
+            !createdAt ||
+            !finishedAt ||
+            finishedAt <
+              createdAt
+          ) {
+            return null;
+          }
+
+
+          return (
+            finishedAt.getTime() -
+            createdAt.getTime()
+          ) /
+          (
+            1000 *
+            60 *
+            60 *
+            24
+          );
+        }
+      )
+    );
+
+
+  const validDurations =
+    durations.filter(
+      Number.isFinite
+    );
+
+
+  if (
+    validDurations.length ===
+    0
+  ) {
+    return null;
+  }
+
+
+  return roundToOne(
+    average(
+      validDurations
+    )
+  );
+}
+
+
+/* ============================================================
+   REPORT DETAILS
+============================================================ */
+
+async function loadReportDetail(
+  report
+) {
+  const cacheKey =
+    report.ReportID ??
+    report.ReportCode;
+
+
+  if (!cacheKey) {
+    return null;
+  }
+
+
+  const cached =
+    detailCache.get(
+      cacheKey
+    );
+
+
+  if (
+    cached &&
+    Date.now() <
+      cached.expiresAt
+  ) {
+    return cached.data;
+  }
+
+
+  let detail =
+    null;
+
+
+  /* ========================================================
+     FIRST TRY:
+     Admin report detail endpoint
+  ======================================================== */
+
+  if (
+    report.ReportID !==
+      null &&
+    report.ReportID !==
+      undefined
+  ) {
+    try {
+      const response =
+        await realApi.get(
+          `/admin/reports/${
+            report.ReportID
+          }`
+        );
+
+
+      detail =
+        response.data;
+    } catch {
+      /*
+       * Fall through to the existing report-code search.
+       */
+    }
+  }
+
+
+  /* ========================================================
+     FALLBACK:
+     This is the same endpoint AllReports.jsx already uses
+     when the admin clicks the eye icon.
+  ======================================================== */
+
+  if (
+    !detail &&
+    report.ReportCode
+  ) {
+    try {
+      const response =
+        await realApi.get(
+          '/issues/search',
+          {
+            params: {
+              code:
+                report.ReportCode
+            }
+          }
+        );
+
+
+      detail =
+        response.data;
+    } catch {
+      detail =
+        null;
+    }
+  }
+
+
+  detailCache.set(
+    cacheKey,
+    {
+      data:
+        detail,
+
+      expiresAt:
+        Date.now() +
+        DETAIL_CACHE_DURATION_MS
+    }
+  );
+
+
+  return detail;
+}
+
+
+/* ============================================================
+   GROUP REPORTS
 ============================================================ */
 
 function groupReports(
@@ -1016,22 +1159,40 @@ function groupReports(
   const counts =
     new Map();
 
+
   reports.forEach(
     (report) => {
-      const key =
+      const rawKey =
         keySelector(
           report
         );
 
+
+      const key =
+        String(
+          rawKey ||
+          ''
+        ).trim();
+
+
+      if (!key) {
+        return;
+      }
+
+
       counts.set(
         key,
         (
-          counts.get(key) ||
+          counts.get(
+            key
+          ) ||
           0
-        ) + 1
+        ) +
+        1
       );
     }
   );
+
 
   return Array.from(
     counts.entries()
@@ -1039,17 +1200,137 @@ function groupReports(
 }
 
 
-function sortCounts(
-  a,
-  b
+/* ============================================================
+   UNIQUE STRINGS
+============================================================ */
+
+function uniqueStrings(
+  values
+) {
+  const map =
+    new Map();
+
+
+  values.forEach(
+    (value) => {
+      const clean =
+        String(
+          value ||
+          ''
+        ).trim();
+
+
+      if (!clean) {
+        return;
+      }
+
+
+      const key =
+        clean.toLowerCase();
+
+
+      if (
+        !map.has(
+          key
+        )
+      ) {
+        map.set(
+          key,
+          clean
+        );
+      }
+    }
+  );
+
+
+  return Array.from(
+    map.values()
+  ).sort(
+    (
+      first,
+      second
+    ) =>
+      first.localeCompare(
+        second
+      )
+  );
+}
+
+
+/* ============================================================
+   STATUS NORMALISATION
+============================================================ */
+
+function normaliseStatus(
+  value
+) {
+  const status =
+    String(
+      value ||
+      ''
+    ).trim();
+
+
+  if (
+    status ===
+    'InProgress'
+  ) {
+    return 'In Progress';
+  }
+
+
+  return status;
+}
+
+
+/* ============================================================
+   TEXT COMPARISON
+============================================================ */
+
+function sameText(
+  first,
+  second
 ) {
   return (
-    b.IssueCount -
-      a.IssueCount ||
-    a.CategoryName.localeCompare(
-      b.CategoryName
+    String(
+      first ||
+      ''
     )
+      .trim()
+      .toLowerCase() ===
+    String(
+      second ||
+      ''
+    )
+      .trim()
+      .toLowerCase()
   );
+}
+
+
+/* ============================================================
+   BOOLEAN VALUE
+============================================================ */
+
+function getBooleanValue(
+  object,
+  ...keys
+) {
+  for (
+    const key of keys
+  ) {
+    if (
+      typeof object?.[key] ===
+      'boolean'
+    ) {
+      return object[
+        key
+      ];
+    }
+  }
+
+
+  return false;
 }
 
 
@@ -1057,32 +1338,30 @@ function sortCounts(
    DATE HELPERS
 ============================================================ */
 
-function startOfLocalDay(
-  date
+function parseDate(
+  value
 ) {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-}
+  if (!value) {
+    return null;
+  }
 
 
-function addDays(
-  date,
-  amount
-) {
-  const copy =
-    new Date(date);
+  const date =
+    new Date(
+      value
+    );
 
-  copy.setDate(
-    copy.getDate() +
-    amount
-  );
 
-  return startOfLocalDay(
-    copy
-  );
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return null;
+  }
+
+
+  return date;
 }
 
 
@@ -1093,32 +1372,64 @@ function parseLocalDate(
     return null;
   }
 
+
   const parts =
-    String(value)
+    String(
+      value
+    )
       .split('-')
-      .map(Number);
+      .map(
+        Number
+      );
+
 
   if (
-    parts.length !== 3 ||
+    parts.length !==
+      3 ||
     parts.some(
       (part) =>
-        !Number.isFinite(part)
+        !Number.isFinite(
+          part
+        )
     )
   ) {
     return null;
   }
 
+
   const [
     year,
     month,
     day
-  ] = parts;
+  ] =
+    parts;
+
 
   return new Date(
     year,
     month - 1,
     day
   );
+}
+
+
+function addDays(
+  date,
+  numberOfDays
+) {
+  const copy =
+    new Date(
+      date
+    );
+
+
+  copy.setDate(
+    copy.getDate() +
+    numberOfDays
+  );
+
+
+  return copy;
 }
 
 
@@ -1129,14 +1440,22 @@ function parseLocalDate(
 function average(
   values
 ) {
-  if (!values.length) {
+  if (
+    values.length ===
+    0
+  ) {
     return null;
   }
 
+
   return (
     values.reduce(
-      (total, value) =>
-        total + value,
+      (
+        total,
+        value
+      ) =>
+        total +
+        value,
       0
     ) /
     values.length
@@ -1147,25 +1466,11 @@ function average(
 function roundToOne(
   value
 ) {
-  return Math.round(
-    value * 10
-  ) / 10;
-}
-
-
-/* ============================================================
-   ASYNC HELPER
-============================================================ */
-
-function delay(
-  milliseconds
-) {
-  return new Promise(
-    (resolve) => {
-      setTimeout(
-        resolve,
-        milliseconds
-      );
-    }
+  return (
+    Math.round(
+      value *
+      10
+    ) /
+    10
   );
 }

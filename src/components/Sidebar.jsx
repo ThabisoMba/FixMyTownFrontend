@@ -9,7 +9,6 @@ import {
 } from 'react-router-dom';
 
 import {
-  Landmark,
   LogOut,
   Menu,
   X
@@ -19,7 +18,31 @@ import {
   useAuth
 } from '../context/AuthContext';
 
+
 const MOBILE_BREAKPOINT = 900;
+
+
+/*
+ * logo2.png lives in /public.
+ *
+ * Using BASE_URL is important because the production app
+ * is deployed under:
+ *
+ *   /grp-03-39/
+ *
+ * Development:
+ *   /logo2.png
+ *
+ * Production:
+ *   /grp-03-39/logo2.png
+ */
+const LOGO_URL =
+  `${import.meta.env.BASE_URL}favicon3.jpeg`;
+
+
+/* =============================================================
+   SIDEBAR
+============================================================= */
 
 export default function Sidebar({
   sections,
@@ -27,41 +50,68 @@ export default function Sidebar({
   userName,
   userSubtitle
 }) {
-  const { logout } = useAuth();
+  const {
+    logout
+  } = useAuth();
 
-  const location = useLocation();
 
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined'
-      ? window.innerWidth <= MOBILE_BREAKPOINT
+  const location =
+    useLocation();
+
+
+  const [
+    isMobile,
+    setIsMobile
+  ] = useState(
+    typeof window !==
+      'undefined'
+      ? window.innerWidth <=
+        MOBILE_BREAKPOINT
       : false
   );
 
-  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const initials = getInitials(userName);
+  const [
+    mobileOpen,
+    setMobileOpen
+  ] = useState(false);
 
 
-  /* ============================================================
+  const initials =
+    getInitials(
+      userName
+    );
+
+
+  /* ==========================================================
      RESPONSIVE BREAKPOINT
-  ============================================================ */
+  ========================================================== */
 
   useEffect(() => {
     function handleResize() {
       const mobile =
-        window.innerWidth <= MOBILE_BREAKPOINT;
+        window.innerWidth <=
+        MOBILE_BREAKPOINT;
 
-      setIsMobile(mobile);
+
+      setIsMobile(
+        mobile
+      );
+
 
       if (!mobile) {
-        setMobileOpen(false);
+        setMobileOpen(
+          false
+        );
       }
     }
+
 
     window.addEventListener(
       'resize',
       handleResize
     );
+
 
     return () => {
       window.removeEventListener(
@@ -72,32 +122,46 @@ export default function Sidebar({
   }, []);
 
 
-  /* ============================================================
+  /* ==========================================================
      CLOSE MOBILE MENU AFTER NAVIGATION
-  ============================================================ */
+  ========================================================== */
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+    setMobileOpen(
+      false
+    );
+  }, [
+    location.pathname
+  ]);
 
 
-  /* ============================================================
-     PREVENT BODY SCROLL WHILE MOBILE DRAWER IS OPEN
-  ============================================================ */
+  /* ==========================================================
+     PREVENT BODY SCROLL WHILE DRAWER IS OPEN
+  ========================================================== */
 
   useEffect(() => {
-    if (!isMobile || !mobileOpen) {
+    if (
+      !isMobile ||
+      !mobileOpen
+    ) {
       return;
     }
 
-    const previousOverflow =
-      document.body.style.overflow;
 
-    document.body.style.overflow = 'hidden';
+    const previousOverflow =
+      document.body.style
+        .overflow;
+
+
+    document.body.style
+      .overflow =
+        'hidden';
+
 
     return () => {
-      document.body.style.overflow =
-        previousOverflow;
+      document.body.style
+        .overflow =
+          previousOverflow;
     };
   }, [
     isMobile,
@@ -105,9 +169,9 @@ export default function Sidebar({
   ]);
 
 
-  /* ============================================================
-     MOBILE VERSION
-  ============================================================ */
+  /* ==========================================================
+     MOBILE
+  ========================================================== */
 
   if (isMobile) {
     return (
@@ -115,85 +179,92 @@ export default function Sidebar({
         <header
           style={{
             height: 58,
+
             width: '100%',
-            background: 'var(--navy-800)',
-            color: 'white',
 
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
+            background:
+              'var(--navy-800)',
 
-            padding: '0 14px',
+            color:
+              'white',
 
-            position: 'sticky',
-            top: 0,
-            zIndex: 1500,
+            display:
+              'flex',
+
+            alignItems:
+              'center',
+
+            gap:
+              10,
+
+            padding:
+              '0 14px',
+
+            position:
+              'sticky',
+
+            top:
+              0,
+
+            zIndex:
+              1500,
 
             borderBottom:
               '1px solid var(--navy-600)'
           }}
         >
-          <Landmark
-            size={21}
-            color="var(--gold-500)"
-            style={{
-              flexShrink: 0
-            }}
+
+          {/* =================================================
+              MOBILE LOGO
+          ================================================= */}
+
+          <BrandLogo
+            mobile
           />
 
-          <div
-            style={{
-              minWidth: 0,
 
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7
-            }}
-          >
+          {roleLabel && (
             <span
               style={{
-                fontWeight: 700,
-                fontSize: 16,
-                whiteSpace: 'nowrap'
+                fontSize:
+                  9,
+
+                fontWeight:
+                  800,
+
+                background:
+                  'var(--navy-600)',
+
+                color:
+                  '#d9e4f1',
+
+                padding:
+                  '3px 7px',
+
+                borderRadius:
+                  999,
+
+                letterSpacing:
+                  0.6,
+
+                whiteSpace:
+                  'nowrap'
               }}
             >
-              Fix{' '}
-              <span
-                style={{
-                  color: 'var(--gold-500)'
-                }}
-              >
-                MyTown
-              </span>
+              {roleLabel}
             </span>
+          )}
 
-            {roleLabel && (
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 800,
 
-                  background:
-                    'var(--navy-600)',
-
-                  padding: '3px 7px',
-                  borderRadius: 999,
-
-                  letterSpacing: 0.6,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {roleLabel}
-              </span>
-            )}
-          </div>
-
+          {/* MENU BUTTON */}
 
           <button
             type="button"
             onClick={() =>
               setMobileOpen(
-                (open) => !open
+                (
+                  open
+                ) => !open
               )
             }
             aria-label={
@@ -201,14 +272,21 @@ export default function Sidebar({
                 ? 'Close navigation'
                 : 'Open navigation'
             }
-            aria-expanded={mobileOpen}
+            aria-expanded={
+              mobileOpen
+            }
             style={{
-              marginLeft: 'auto',
+              marginLeft:
+                'auto',
 
-              width: 38,
-              height: 38,
+              width:
+                38,
 
-              borderRadius: 9,
+              height:
+                38,
+
+              borderRadius:
+                9,
 
               border:
                 '1px solid rgba(255,255,255,0.16)',
@@ -216,46 +294,81 @@ export default function Sidebar({
               background:
                 'rgba(255,255,255,0.08)',
 
-              color: 'white',
+              color:
+                'white',
 
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display:
+                'flex',
 
-              flexShrink: 0
+              alignItems:
+                'center',
+
+              justifyContent:
+                'center',
+
+              cursor:
+                'pointer',
+
+              flexShrink:
+                0
             }}
           >
             {mobileOpen
-              ? <X size={20} />
-              : <Menu size={20} />}
+              ? (
+                <X
+                  size={20}
+                />
+              )
+              : (
+                <Menu
+                  size={20}
+                />
+              )}
           </button>
         </header>
 
 
+        {/* ===================================================
+            MOBILE DRAWER
+        =================================================== */}
+
         {mobileOpen && (
           <div
             style={{
-              position: 'fixed',
+              position:
+                'fixed',
 
-              top: 58,
-              left: 0,
-              right: 0,
-              bottom: 0,
+              top:
+                58,
 
-              zIndex: 1490,
+              left:
+                0,
+
+              right:
+                0,
+
+              bottom:
+                0,
+
+              zIndex:
+                1490,
 
               background:
                 'rgba(15, 33, 54, 0.58)',
 
-              display: 'flex'
+              display:
+                'flex'
             }}
             onClick={() =>
-              setMobileOpen(false)
+              setMobileOpen(
+                false
+              )
             }
           >
             <aside
               style={{
-                width: 'min(88vw, 360px)',
+                width:
+                  'min(88vw, 360px)',
 
                 height:
                   'calc(100dvh - 58px)',
@@ -263,35 +376,57 @@ export default function Sidebar({
                 background:
                   'var(--navy-800)',
 
-                color: 'white',
+                color:
+                  'white',
 
-                display: 'flex',
-                flexDirection: 'column',
+                display:
+                  'flex',
+
+                flexDirection:
+                  'column',
 
                 boxShadow:
                   '12px 0 32px rgba(0,0,0,0.28)',
 
-                overflow: 'hidden'
+                overflow:
+                  'hidden'
               }}
-              onClick={(e) =>
-                e.stopPropagation()
+              onClick={(
+                event
+              ) =>
+                event
+                  .stopPropagation()
               }
             >
               <UserBlock
-                initials={initials}
-                userName={userName}
-                userSubtitle={userSubtitle}
-              />
-
-              <PortalNavigation
-                sections={sections}
-                onNavigate={() =>
-                  setMobileOpen(false)
+                initials={
+                  initials
+                }
+                userName={
+                  userName
+                }
+                userSubtitle={
+                  userSubtitle
                 }
               />
 
+
+              <PortalNavigation
+                sections={
+                  sections
+                }
+                onNavigate={() =>
+                  setMobileOpen(
+                    false
+                  )
+                }
+              />
+
+
               <LogoutButton
-                onLogout={logout}
+                onLogout={
+                  logout
+                }
               />
             </aside>
           </div>
@@ -301,99 +436,112 @@ export default function Sidebar({
   }
 
 
-  /* ============================================================
-     DESKTOP VERSION
-  ============================================================ */
+  /* ==========================================================
+     DESKTOP
+  ========================================================== */
 
   return (
     <aside
       style={{
-        width: 'var(--sidebar-width)',
+        width:
+          'var(--sidebar-width)',
 
-        /*
-         * IMPORTANT:
-         * The sidebar is locked to the viewport.
-         * Long report lists will no longer stretch it.
-         */
-        height: '100vh',
-        maxHeight: '100vh',
+        height:
+          '100vh',
 
-        position: 'sticky',
-        top: 0,
+        maxHeight:
+          '100vh',
 
-        alignSelf: 'flex-start',
+        position:
+          'sticky',
 
-        background: 'var(--navy-800)',
-        color: 'white',
+        top:
+          0,
 
-        display: 'flex',
-        flexDirection: 'column',
+        alignSelf:
+          'flex-start',
 
-        flexShrink: 0,
+        background:
+          'var(--navy-800)',
 
-        /*
-         * Prevent the entire sidebar from scrolling.
-         * Only the navigation section scrolls.
-         */
-        overflow: 'hidden'
+        color:
+          'white',
+
+        display:
+          'flex',
+
+        flexDirection:
+          'column',
+
+        flexShrink:
+          0,
+
+        overflow:
+          'hidden'
       }}
     >
-      {/* ========================================================
+
+      {/* =====================================================
           BRAND
-      ======================================================== */}
+      ===================================================== */}
 
       <div
         style={{
-          padding: '20px 20px 16px',
+          minHeight:
+            78,
 
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
+          padding:
+            '12px 18px',
+
+          display:
+            'flex',
+
+          alignItems:
+            'center',
+
+          gap:
+            10,
 
           borderBottom:
             '1px solid var(--navy-600)',
 
-          flexShrink: 0
+          flexShrink:
+            0
         }}
       >
-        <Landmark
-          size={22}
-          color="var(--gold-500)"
-        />
 
-        <span
-          style={{
-            fontWeight: 700,
-            fontSize: 17,
-            whiteSpace: 'nowrap'
-          }}
-        >
-          Fix{' '}
-          <span
-            style={{
-              color: 'var(--gold-500)'
-            }}
-          >
-            MyTown
-          </span>
-        </span>
+        <BrandLogo />
+
 
         {roleLabel && (
           <span
             style={{
-              marginLeft: 'auto',
+              marginLeft:
+                'auto',
 
-              fontSize: 10,
-              fontWeight: 700,
+              fontSize:
+                9,
+
+              fontWeight:
+                800,
 
               background:
                 'var(--navy-600)',
 
-              padding: '3px 8px',
+              color:
+                '#d9e4f1',
 
-              borderRadius: 999,
+              padding:
+                '4px 8px',
 
-              letterSpacing: 0.5
+              borderRadius:
+                999,
+
+              letterSpacing:
+                0.5,
+
+              whiteSpace:
+                'nowrap'
             }}
           >
             {roleLabel}
@@ -402,40 +550,173 @@ export default function Sidebar({
       </div>
 
 
-      {/* ========================================================
+      {/* =====================================================
           USER
-      ======================================================== */}
+      ===================================================== */}
 
       <UserBlock
-        initials={initials}
-        userName={userName}
-        userSubtitle={userSubtitle}
+        initials={
+          initials
+        }
+        userName={
+          userName
+        }
+        userSubtitle={
+          userSubtitle
+        }
       />
 
 
-      {/* ========================================================
+      {/* =====================================================
           NAVIGATION
-
-          flex: 1 fills available remaining height.
-          minHeight: 0 is important so overflowY works correctly.
-      ======================================================== */}
+      ===================================================== */}
 
       <PortalNavigation
-        sections={sections}
+        sections={
+          sections
+        }
       />
 
 
-      {/* ========================================================
+      {/* =====================================================
           LOGOUT
-
-          Because navigation is the flexible/scrollable section,
-          this button stays at the bottom of the viewport.
-      ======================================================== */}
+      ===================================================== */}
 
       <LogoutButton
-        onLogout={logout}
+        onLogout={
+          logout
+        }
       />
     </aside>
+  );
+}
+
+
+/* =============================================================
+   BRAND LOGO
+============================================================= */
+
+function BrandLogo({
+  mobile = false
+}) {
+  const [
+    failed,
+    setFailed
+  ] = useState(false);
+
+
+  /*
+   * No white card/background is placed behind the logo.
+   *
+   * The image sits directly on the same navy colour as the
+   * sidebar, which lets a transparent logo2.png blend naturally.
+   */
+  if (failed) {
+    return (
+      <div
+        style={{
+          color:
+            'white',
+
+          fontWeight:
+            800,
+
+          fontSize:
+            mobile
+              ? 15
+              : 17,
+
+          whiteSpace:
+            'nowrap'
+        }}
+      >
+        Fix{' '}
+
+        <span
+          style={{
+            color:
+              'var(--gold-500)'
+          }}
+        >
+          MyTown
+        </span>
+      </div>
+    );
+  }
+
+
+  return (
+    <div
+      style={{
+        width:
+          mobile
+            ? 122
+            : 138,
+
+        height:
+          mobile
+            ? 40
+            : 52,
+
+        display:
+          'flex',
+
+        alignItems:
+          'center',
+
+        justifyContent:
+          'flex-start',
+
+        overflow:
+          'hidden',
+
+        flexShrink:
+          0,
+
+        background:
+          'transparent'
+      }}
+    >
+      <img
+        src={
+          LOGO_URL
+        }
+        alt="Fix MyTown"
+        onError={() =>
+          setFailed(
+            true
+          )
+        }
+        style={{
+          display:
+            'block',
+
+          width:
+            '100%',
+
+          height:
+            '100%',
+
+          objectFit:
+            'contain',
+
+          objectPosition:
+            'left center',
+
+          background:
+            'transparent',
+
+          /*
+           * Small adjustment only.
+           *
+           * There is intentionally no border, card, white
+           * background or heavy shadow around the image.
+           */
+          filter:
+            'brightness(1.04) contrast(1.04)'
+        }}
+      />
+    </div>
   );
 }
 
@@ -452,36 +733,59 @@ function UserBlock({
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
+        display:
+          'flex',
 
-        padding: '18px 20px',
+        alignItems:
+          'center',
+
+        gap:
+          10,
+
+        padding:
+          '18px 20px',
 
         borderBottom:
           '1px solid var(--navy-600)',
 
-        flexShrink: 0
+        flexShrink:
+          0
       }}
     >
       <div
         style={{
-          width: 38,
-          height: 38,
+          width:
+            38,
 
-          borderRadius: '50%',
+          height:
+            38,
 
-          background: 'var(--gold-500)',
-          color: 'var(--navy-900)',
+          borderRadius:
+            '50%',
 
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          background:
+            'var(--gold-500)',
 
-          fontWeight: 700,
-          fontSize: 14,
+          color:
+            'var(--navy-900)',
 
-          flexShrink: 0
+          display:
+            'flex',
+
+          alignItems:
+            'center',
+
+          justifyContent:
+            'center',
+
+          fontWeight:
+            700,
+
+          fontSize:
+            14,
+
+          flexShrink:
+            0
         }}
       >
         {initials}
@@ -490,33 +794,53 @@ function UserBlock({
 
       <div
         style={{
-          minWidth: 0
+          minWidth:
+            0
         }}
       >
         <div
           style={{
-            fontWeight: 600,
-            fontSize: 14,
+            fontWeight:
+              600,
 
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
+            fontSize:
+              14,
+
+            overflow:
+              'hidden',
+
+            textOverflow:
+              'ellipsis',
+
+            whiteSpace:
+              'nowrap'
           }}
         >
-          {userName || 'User'}
+          {userName ||
+            'User'}
         </div>
+
 
         <div
           style={{
-            fontSize: 12,
-            color: '#9db2cc',
+            fontSize:
+              12,
 
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
+            color:
+              '#9db2cc',
+
+            overflow:
+              'hidden',
+
+            textOverflow:
+              'ellipsis',
+
+            whiteSpace:
+              'nowrap'
           }}
         >
-          {userSubtitle || ''}
+          {userSubtitle ||
+            ''}
         </div>
       </div>
     </div>
@@ -535,118 +859,180 @@ function PortalNavigation({
   return (
     <nav
       style={{
-        flex: 1,
+        flex:
+          1,
 
-        /*
-         * CRITICAL:
-         * Allows the nav itself to scroll without
-         * moving the Logout button.
-         */
-        minHeight: 0,
+        minHeight:
+          0,
 
-        padding: '16px 12px',
+        padding:
+          '16px 12px',
 
-        overflowY: 'auto',
-        overflowX: 'hidden'
+        overflowY:
+          'auto',
+
+        overflowX:
+          'hidden'
       }}
     >
-      {sections.map((section) => (
-        <div
-          key={section.heading}
-          style={{
-            marginBottom: 18
-          }}
-        >
+      {sections.map(
+        (
+          section
+        ) => (
           <div
+            key={
+              section.heading
+            }
             style={{
-              fontSize: 10,
-              fontWeight: 700,
-
-              color: '#7186a3',
-
-              letterSpacing: 0.8,
-
-              textTransform: 'uppercase',
-
-              padding: '0 10px 8px'
+              marginBottom:
+                18
             }}
           >
-            {section.heading}
-          </div>
+            <div
+              style={{
+                fontSize:
+                  10,
 
-
-          {section.items.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.end}
-              onClick={onNavigate}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-
-                padding: '11px 10px',
-
-                borderRadius: 8,
-
-                fontSize: 14,
-                fontWeight: 600,
-
-                textDecoration: 'none',
+                fontWeight:
+                  700,
 
                 color:
-                  isActive
-                    ? 'var(--gold-500)'
-                    : '#c7d3e3',
+                  '#7186a3',
 
-                background:
-                  isActive
-                    ? 'var(--navy-700)'
-                    : 'transparent',
+                letterSpacing:
+                  0.8,
 
-                marginBottom: 3
-              })}
+                textTransform:
+                  'uppercase',
+
+                padding:
+                  '0 10px 8px'
+              }}
             >
-              <item.icon
-                size={17}
-                style={{
-                  flexShrink: 0
-                }}
-              />
+              {
+                section.heading
+              }
+            </div>
 
-              <span
-                style={{
-                  flex: 1,
-                  minWidth: 0
-                }}
-              >
-                {item.label}
-              </span>
 
-              {!!item.badge && (
-                <span
-                  style={{
-                    background: '#ef4444',
-                    color: 'white',
+            {section.items.map(
+              (
+                item
+              ) => (
+                <NavLink
+                  key={
+                    item.path
+                  }
+                  to={
+                    item.path
+                  }
+                  end={
+                    item.end
+                  }
+                  onClick={
+                    onNavigate
+                  }
+                  style={({
+                    isActive
+                  }) => ({
+                    display:
+                      'flex',
 
-                    fontSize: 11,
-                    fontWeight: 700,
+                    alignItems:
+                      'center',
 
-                    borderRadius: 999,
+                    gap:
+                      10,
 
-                    padding: '1px 7px',
+                    padding:
+                      '11px 10px',
 
-                    flexShrink: 0
-                  }}
+                    borderRadius:
+                      8,
+
+                    fontSize:
+                      14,
+
+                    fontWeight:
+                      600,
+
+                    textDecoration:
+                      'none',
+
+                    color:
+                      isActive
+                        ? 'var(--gold-500)'
+                        : '#c7d3e3',
+
+                    background:
+                      isActive
+                        ? 'var(--navy-700)'
+                        : 'transparent',
+
+                    marginBottom:
+                      3
+                  })}
                 >
-                  {item.badge}
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      ))}
+                  <item.icon
+                    size={17}
+                    style={{
+                      flexShrink:
+                        0
+                    }}
+                  />
+
+
+                  <span
+                    style={{
+                      flex:
+                        1,
+
+                      minWidth:
+                        0
+                    }}
+                  >
+                    {
+                      item.label
+                    }
+                  </span>
+
+
+                  {!!item.badge && (
+                    <span
+                      style={{
+                        background:
+                          '#ef4444',
+
+                        color:
+                          'white',
+
+                        fontSize:
+                          11,
+
+                        fontWeight:
+                          700,
+
+                        borderRadius:
+                          999,
+
+                        padding:
+                          '1px 7px',
+
+                        flexShrink:
+                          0
+                      }}
+                    >
+                      {
+                        item.badge
+                      }
+                    </span>
+                  )}
+                </NavLink>
+              )
+            )}
+          </div>
+        )
+      )}
     </nav>
   );
 }
@@ -662,33 +1048,56 @@ function LogoutButton({
   return (
     <button
       type="button"
-      onClick={onLogout}
+      onClick={
+        onLogout
+      }
       style={{
-        margin: 12,
+        margin:
+          12,
 
-        padding: '11px 12px',
+        padding:
+          '11px 12px',
 
-        background: 'transparent',
+        background:
+          'transparent',
 
         border:
           '1px solid var(--navy-600)',
 
-        borderRadius: 8,
+        borderRadius:
+          8,
 
-        color: '#c7d3e3',
+        color:
+          '#c7d3e3',
 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
+        display:
+          'flex',
 
-        fontSize: 14,
-        fontWeight: 600,
+        alignItems:
+          'center',
 
-        flexShrink: 0
+        justifyContent:
+          'center',
+
+        gap:
+          8,
+
+        fontSize:
+          14,
+
+        fontWeight:
+          600,
+
+        cursor:
+          'pointer',
+
+        flexShrink:
+          0
       }}
     >
-      <LogOut size={16} />
+      <LogOut
+        size={16}
+      />
 
       Logout
     </button>
@@ -700,19 +1109,35 @@ function LogoutButton({
    INITIALS
 ============================================================= */
 
-function getInitials(name) {
+function getInitials(
+  name
+) {
   if (!name) {
     return 'U';
   }
 
+
   return (
     name
       .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((part) => part[0])
-      .slice(0, 2)
+      .split(
+        /\s+/
+      )
+      .filter(
+        Boolean
+      )
+      .map(
+        (
+          part
+        ) =>
+          part[0]
+      )
+      .slice(
+        0,
+        2
+      )
       .join('')
-      .toUpperCase() || 'U'
+      .toUpperCase() ||
+    'U'
   );
 }

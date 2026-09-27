@@ -27,7 +27,7 @@ import {
   YAxis
 } from 'recharts';
 
-import api from '../../api/api';
+import api from './analyticsMockApi';
 import TopBar from '../../components/TopBar';
 import PageTransition from '../../components/PageTransition';
 

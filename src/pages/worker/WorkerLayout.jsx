@@ -1,4 +1,7 @@
-import { Outlet } from 'react-router-dom';
+import {
+  Outlet
+} from 'react-router-dom';
+
 import {
   LayoutDashboard,
   ClipboardList,
@@ -9,7 +12,10 @@ import {
 } from 'lucide-react';
 
 import Sidebar from '../../components/Sidebar';
-import { useAuth } from '../../context/AuthContext';
+
+import {
+  useAuth
+} from '../../context/AuthContext';
 
 export default function WorkerLayout() {
   const { user } = useAuth();
@@ -17,6 +23,7 @@ export default function WorkerLayout() {
   const sections = [
     {
       heading: 'My Work',
+
       items: [
         {
           label: 'Dashboard',
@@ -24,24 +31,28 @@ export default function WorkerLayout() {
           path: '/worker/dashboard',
           end: true
         },
+
         {
           label: 'All Assignments',
           icon: ClipboardList,
           path: '/worker/assignments',
           end: true
         },
+
         {
           label: 'Recently Assigned',
           icon: Clock3,
           path: '/worker/recently-assigned',
           end: true
         },
+
         {
           label: 'In Progress',
           icon: Loader,
           path: '/worker/in-progress',
           end: true
         },
+
         {
           label: 'Completed',
           icon: CheckCircle2,
@@ -50,8 +61,10 @@ export default function WorkerLayout() {
         }
       ]
     },
+
     {
       heading: 'Account',
+
       items: [
         {
           label: 'My Profile',
@@ -62,23 +75,69 @@ export default function WorkerLayout() {
     }
   ];
 
+
   return (
-    <div style={{ display: 'flex' }}>
+    <div
+      className="worker-portal-layout"
+    >
       <Sidebar
         sections={sections}
         roleLabel="WORKER"
         userName={user?.fullName}
-        userSubtitle={user?.role}
+        userSubtitle={
+          user?.role ||
+          'Municipal Worker'
+        }
       />
 
-      <div
-        style={{
-          flex: 1,
-          minWidth: 0
-        }}
+
+      <main
+        className="worker-portal-main"
       >
         <Outlet />
-      </div>
+      </main>
+
+
+      <style>
+        {`
+          .worker-portal-layout {
+            min-height: 100vh;
+
+            display: flex;
+
+            /*
+             * Prevent the sidebar from
+             * stretching with long content.
+             */
+            align-items: flex-start;
+          }
+
+          .worker-portal-main {
+            flex: 1;
+
+            min-width: 0;
+
+            width: 100%;
+
+            min-height: 100vh;
+          }
+
+          @media (max-width: 900px) {
+            .worker-portal-layout {
+              flex-direction: column;
+
+              align-items: stretch;
+            }
+
+            .worker-portal-main {
+              width: 100%;
+
+              min-height:
+                calc(100vh - 58px);
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }

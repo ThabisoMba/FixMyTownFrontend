@@ -1,45 +1,398 @@
-/**
- * Sidebar.jsx
- * -----------
- * The dark navy sidebar used by both the Admin and Worker portals.
- * `sections` is an array of { heading, items: [{ label, icon, path, badge }] }
- * so each portal can define its own menu while sharing one look.
- */
+import {
+  useEffect,
+  useState
+} from 'react';
 
-import { NavLink } from 'react-router-dom';
-import { Landmark, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import {
+  NavLink,
+  useLocation
+} from 'react-router-dom';
 
-export default function Sidebar({ sections, roleLabel, userName, userSubtitle }) {
+import {
+  Landmark,
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
+
+import {
+  useAuth
+} from '../context/AuthContext';
+
+const MOBILE_BREAKPOINT = 900;
+
+export default function Sidebar({
+  sections,
+  roleLabel,
+  userName,
+  userSubtitle
+}) {
   const { logout } = useAuth();
-  const initials = userName ? userName.split(' ').map((n) => n[0]).slice(0, 2).join('') : 'U';
+
+  const location = useLocation();
+
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined'
+      ? window.innerWidth <= MOBILE_BREAKPOINT
+      : false
+  );
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const initials = getInitials(userName);
+
+
+  /* ============================================================
+     RESPONSIVE BREAKPOINT
+  ============================================================ */
+
+  useEffect(() => {
+    function handleResize() {
+      const mobile =
+        window.innerWidth <= MOBILE_BREAKPOINT;
+
+      setIsMobile(mobile);
+
+      if (!mobile) {
+        setMobileOpen(false);
+      }
+    }
+
+    window.addEventListener(
+      'resize',
+      handleResize
+    );
+
+    return () => {
+      window.removeEventListener(
+        'resize',
+        handleResize
+      );
+    };
+  }, []);
+
+
+  /* ============================================================
+     CLOSE MOBILE MENU AFTER NAVIGATION
+  ============================================================ */
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+
+  /* ============================================================
+     PREVENT BODY SCROLL WHILE MOBILE DRAWER IS OPEN
+  ============================================================ */
+
+  useEffect(() => {
+    if (!isMobile || !mobileOpen) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [
+    isMobile,
+    mobileOpen
+  ]);
+
+
+  /* ============================================================
+     MOBILE VERSION
+  ============================================================ */
+
+  if (isMobile) {
+    return (
+      <>
+        <header
+          style={{
+            height: 58,
+            width: '100%',
+            background: 'var(--navy-800)',
+            color: 'white',
+
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+
+            padding: '0 14px',
+
+            position: 'sticky',
+            top: 0,
+            zIndex: 1500,
+
+            borderBottom:
+              '1px solid var(--navy-600)'
+          }}
+        >
+          <Landmark
+            size={21}
+            color="var(--gold-500)"
+            style={{
+              flexShrink: 0
+            }}
+          />
+
+          <div
+            style={{
+              minWidth: 0,
+
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: 16,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Fix{' '}
+              <span
+                style={{
+                  color: 'var(--gold-500)'
+                }}
+              >
+                MyTown
+              </span>
+            </span>
+
+            {roleLabel && (
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 800,
+
+                  background:
+                    'var(--navy-600)',
+
+                  padding: '3px 7px',
+                  borderRadius: 999,
+
+                  letterSpacing: 0.6,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {roleLabel}
+              </span>
+            )}
+          </div>
+
+
+          <button
+            type="button"
+            onClick={() =>
+              setMobileOpen(
+                (open) => !open
+              )
+            }
+            aria-label={
+              mobileOpen
+                ? 'Close navigation'
+                : 'Open navigation'
+            }
+            aria-expanded={mobileOpen}
+            style={{
+              marginLeft: 'auto',
+
+              width: 38,
+              height: 38,
+
+              borderRadius: 9,
+
+              border:
+                '1px solid rgba(255,255,255,0.16)',
+
+              background:
+                'rgba(255,255,255,0.08)',
+
+              color: 'white',
+
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+
+              flexShrink: 0
+            }}
+          >
+            {mobileOpen
+              ? <X size={20} />
+              : <Menu size={20} />}
+          </button>
+        </header>
+
+
+        {mobileOpen && (
+          <div
+            style={{
+              position: 'fixed',
+
+              top: 58,
+              left: 0,
+              right: 0,
+              bottom: 0,
+
+              zIndex: 1490,
+
+              background:
+                'rgba(15, 33, 54, 0.58)',
+
+              display: 'flex'
+            }}
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            <aside
+              style={{
+                width: 'min(88vw, 360px)',
+
+                height:
+                  'calc(100dvh - 58px)',
+
+                background:
+                  'var(--navy-800)',
+
+                color: 'white',
+
+                display: 'flex',
+                flexDirection: 'column',
+
+                boxShadow:
+                  '12px 0 32px rgba(0,0,0,0.28)',
+
+                overflow: 'hidden'
+              }}
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
+              <UserBlock
+                initials={initials}
+                userName={userName}
+                userSubtitle={userSubtitle}
+              />
+
+              <PortalNavigation
+                sections={sections}
+                onNavigate={() =>
+                  setMobileOpen(false)
+                }
+              />
+
+              <LogoutButton
+                onLogout={logout}
+              />
+            </aside>
+          </div>
+        )}
+      </>
+    );
+  }
+
+
+  /* ============================================================
+     DESKTOP VERSION
+  ============================================================ */
 
   return (
     <aside
       style={{
         width: 'var(--sidebar-width)',
-        minHeight: '100vh',
+
+        /*
+         * IMPORTANT:
+         * The sidebar is locked to the viewport.
+         * Long report lists will no longer stretch it.
+         */
+        height: '100vh',
+        maxHeight: '100vh',
+
+        position: 'sticky',
+        top: 0,
+
+        alignSelf: 'flex-start',
+
         background: 'var(--navy-800)',
         color: 'white',
+
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0
+
+        flexShrink: 0,
+
+        /*
+         * Prevent the entire sidebar from scrolling.
+         * Only the navigation section scrolls.
+         */
+        overflow: 'hidden'
       }}
     >
-      <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--navy-600)' }}>
-        <Landmark size={22} color="var(--gold-500)" />
-        <span style={{ fontWeight: 700, fontSize: 17 }}>
-          Fix <span style={{ color: 'var(--gold-500)' }}>MyTown</span>
+      {/* ========================================================
+          BRAND
+      ======================================================== */}
+
+      <div
+        style={{
+          padding: '20px 20px 16px',
+
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+
+          borderBottom:
+            '1px solid var(--navy-600)',
+
+          flexShrink: 0
+        }}
+      >
+        <Landmark
+          size={22}
+          color="var(--gold-500)"
+        />
+
+        <span
+          style={{
+            fontWeight: 700,
+            fontSize: 17,
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Fix{' '}
+          <span
+            style={{
+              color: 'var(--gold-500)'
+            }}
+          >
+            MyTown
+          </span>
         </span>
+
         {roleLabel && (
           <span
             style={{
               marginLeft: 'auto',
+
               fontSize: 10,
               fontWeight: 700,
-              background: 'var(--navy-600)',
+
+              background:
+                'var(--navy-600)',
+
               padding: '3px 8px',
+
               borderRadius: 999,
+
               letterSpacing: 0.5
             }}
           >
@@ -48,103 +401,318 @@ export default function Sidebar({ sections, roleLabel, userName, userSubtitle })
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px', borderBottom: '1px solid var(--navy-600)' }}>
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: '50%',
-            background: 'var(--gold-500)',
-            color: 'var(--navy-900)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: 14
-          }}
-        >
-          {initials}
-        </div>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>{userName}</div>
-          <div style={{ fontSize: 12, color: '#9db2cc' }}>{userSubtitle}</div>
-        </div>
-      </div>
 
-      <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
-        {sections.map((section) => (
-          <div key={section.heading} style={{ marginBottom: 18 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: '#7186a3',
-                letterSpacing: 0.8,
-                textTransform: 'uppercase',
-                padding: '0 10px 8px'
-              }}
-            >
-              {section.heading}
-            </div>
-            {section.items.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.end}
-                style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 10px',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  color: isActive ? 'var(--gold-500)' : '#c7d3e3',
-                  background: isActive ? 'var(--navy-700)' : 'transparent',
-                  marginBottom: 2
-                })}
-              >
-                <item.icon size={17} />
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {!!item.badge && (
-                  <span
-                    style={{
-                      background: '#ef4444',
-                      color: 'white',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      borderRadius: 999,
-                      padding: '1px 7px'
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </NavLink>
-            ))}
-          </div>
-        ))}
-      </nav>
+      {/* ========================================================
+          USER
+      ======================================================== */}
 
-      <button
-        onClick={logout}
+      <UserBlock
+        initials={initials}
+        userName={userName}
+        userSubtitle={userSubtitle}
+      />
+
+
+      {/* ========================================================
+          NAVIGATION
+
+          flex: 1 fills available remaining height.
+          minHeight: 0 is important so overflowY works correctly.
+      ======================================================== */}
+
+      <PortalNavigation
+        sections={sections}
+      />
+
+
+      {/* ========================================================
+          LOGOUT
+
+          Because navigation is the flexible/scrollable section,
+          this button stays at the bottom of the viewport.
+      ======================================================== */}
+
+      <LogoutButton
+        onLogout={logout}
+      />
+    </aside>
+  );
+}
+
+
+/* =============================================================
+   USER BLOCK
+============================================================= */
+
+function UserBlock({
+  initials,
+  userName,
+  userSubtitle
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+
+        padding: '18px 20px',
+
+        borderBottom:
+          '1px solid var(--navy-600)',
+
+        flexShrink: 0
+      }}
+    >
+      <div
         style={{
-          margin: '12px',
-          padding: '10px',
-          background: 'transparent',
-          border: '1px solid var(--navy-600)',
-          borderRadius: 8,
-          color: '#c7d3e3',
+          width: 38,
+          height: 38,
+
+          borderRadius: '50%',
+
+          background: 'var(--gold-500)',
+          color: 'var(--navy-900)',
+
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          justifyContent: 'center',
+
+          fontWeight: 700,
           fontSize: 14,
-          fontWeight: 600
+
+          flexShrink: 0
         }}
       >
-        <LogOut size={16} /> Logout
-      </button>
-    </aside>
+        {initials}
+      </div>
+
+
+      <div
+        style={{
+          minWidth: 0
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 600,
+            fontSize: 14,
+
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {userName || 'User'}
+        </div>
+
+        <div
+          style={{
+            fontSize: 12,
+            color: '#9db2cc',
+
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {userSubtitle || ''}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* =============================================================
+   NAVIGATION
+============================================================= */
+
+function PortalNavigation({
+  sections,
+  onNavigate
+}) {
+  return (
+    <nav
+      style={{
+        flex: 1,
+
+        /*
+         * CRITICAL:
+         * Allows the nav itself to scroll without
+         * moving the Logout button.
+         */
+        minHeight: 0,
+
+        padding: '16px 12px',
+
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
+    >
+      {sections.map((section) => (
+        <div
+          key={section.heading}
+          style={{
+            marginBottom: 18
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+
+              color: '#7186a3',
+
+              letterSpacing: 0.8,
+
+              textTransform: 'uppercase',
+
+              padding: '0 10px 8px'
+            }}
+          >
+            {section.heading}
+          </div>
+
+
+          {section.items.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.end}
+              onClick={onNavigate}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+
+                padding: '11px 10px',
+
+                borderRadius: 8,
+
+                fontSize: 14,
+                fontWeight: 600,
+
+                textDecoration: 'none',
+
+                color:
+                  isActive
+                    ? 'var(--gold-500)'
+                    : '#c7d3e3',
+
+                background:
+                  isActive
+                    ? 'var(--navy-700)'
+                    : 'transparent',
+
+                marginBottom: 3
+              })}
+            >
+              <item.icon
+                size={17}
+                style={{
+                  flexShrink: 0
+                }}
+              />
+
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0
+                }}
+              >
+                {item.label}
+              </span>
+
+              {!!item.badge && (
+                <span
+                  style={{
+                    background: '#ef4444',
+                    color: 'white',
+
+                    fontSize: 11,
+                    fontWeight: 700,
+
+                    borderRadius: 999,
+
+                    padding: '1px 7px',
+
+                    flexShrink: 0
+                  }}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+
+/* =============================================================
+   LOGOUT BUTTON
+============================================================= */
+
+function LogoutButton({
+  onLogout
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onLogout}
+      style={{
+        margin: 12,
+
+        padding: '11px 12px',
+
+        background: 'transparent',
+
+        border:
+          '1px solid var(--navy-600)',
+
+        borderRadius: 8,
+
+        color: '#c7d3e3',
+
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+
+        fontSize: 14,
+        fontWeight: 600,
+
+        flexShrink: 0
+      }}
+    >
+      <LogOut size={16} />
+
+      Logout
+    </button>
+  );
+}
+
+
+/* =============================================================
+   INITIALS
+============================================================= */
+
+function getInitials(name) {
+  if (!name) {
+    return 'U';
+  }
+
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U'
   );
 }

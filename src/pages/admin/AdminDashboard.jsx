@@ -1,73 +1,128 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
+
 import {
   Eye,
-  UserPlus,
-  CheckCircle,
   X,
-  Search
+  AlertTriangle,
+  Download,
+  Users,
+  Activity
 } from 'lucide-react';
 
 import api from '../../api/api';
+
 import TopBar from '../../components/TopBar';
+
 import StatusBadge from '../../components/StatusBadge';
+
 import PriorityDot from '../../components/PriorityDot';
+
 import PageTransition from '../../components/PageTransition';
 
-const API_ORIGIN = 'http://localhost:5000';
+import {
+  formatSADateTime
+} from '../../utils/dateUtils';
 
-const WORKERS_ENDPOINT = '/admin/workers';
-const ASSIGNMENT_ENDPOINT = '/admin/assignments';
+
+const APP_BASE =
+  (import.meta.env.BASE_URL || '/')
+    .replace(/\/$/, '');
+
+
+const API_ORIGIN =
+  import.meta.env.DEV
+    ? 'http://localhost:5000'
+    : `${window.location.origin}${APP_BASE}`;
 
 
 export default function AdminDashboard() {
-const [data, setData] = useState(null);
+  const [data, setData] =
+    useState(null);
 
-  const [dashboard, setDashboard] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshAnimation, setRefreshAnimation] = useState(false);
+  const [error, setError] =
+    useState('');
 
-  // Report modal
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [loadingReport, setLoadingReport] = useState(false);
+  const [
+    refreshing,
+    setRefreshing
+  ] = useState(false);
 
-  // Assignment modal
-  const [assignmentReport, setAssignmentReport] = useState(null);
-  const [workers, setWorkers] = useState([]);
-  const [selectedWorkerId, setSelectedWorkerId] = useState('');
-  const [loadingWorkers, setLoadingWorkers] = useState(false);
-  const [assigning, setAssigning] = useState(false);
+  const [
+    selectedReport,
+    setSelectedReport
+  ] = useState(null);
 
-  // Messages
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [
+    loadingReport,
+    setLoadingReport
+  ] = useState(false);
 
-  /*
-   * ============================================================
-   * LOAD DASHBOARD
-   * ============================================================
-   */
+
+  /* ============================================================
+     LOAD DASHBOARD
+  ============================================================ */
+
   async function load() {
     try {
       setError('');
 
-      const response = await api.get('/admin/dashboard');
+      const response =
+        await api.get(
+          '/admin/dashboard'
+        );
 
       setData(response.data);
     } catch (err) {
-      console.error('Dashboard loading error:', err);
+      console.error(
+        'Dashboard loading error:',
+        err
+      );
 
       setError(
         err.response?.data?.message ||
-        'Could not load the admin dashboard.'
+          'Could not load the admin dashboard.'
       );
     }
   }
+
 
   useEffect(() => {
     load();
   }, []);
 
-   
+
+  const recentReports =
+    useMemo(
+      () =>
+        Array.isArray(
+          data?.recentReports
+        )
+          ? data.recentReports
+          : [],
+      [data]
+    );
+
+
+  const workerOverview =
+    useMemo(
+      () =>
+        Array.isArray(
+          data?.workerOverview
+        )
+          ? data.workerOverview
+          : [],
+      [data]
+    );
+
+
+  /* ============================================================
+     PHOTO URL
+  ============================================================ */
+
   function getPhotoUrl(photo) {
     if (!photo) {
       return '';
@@ -88,34 +143,38 @@ const [data, setData] = useState(null);
   }
 
 
-  /*
-   * ============================================================
-   * VIEW REPORT
-   * ============================================================
-   *
-   * Uses the same endpoint that worked for your All Reports
-   * page:
-   *
-   * GET /api/issues/search?code=GRP-...
-   */
+  /* ============================================================
+     VIEW REPORT
+  ============================================================ */
+
   async function viewReport(report) {
     try {
       setError('');
       setLoadingReport(true);
 
-      const response = await api.get('/issues/search', {
-        params: {
-          code: report.ReportCode
-        }
-      });
+      const response =
+        await api.get(
+          '/issues/search',
+          {
+            params: {
+              code:
+                report.ReportCode
+            }
+          }
+        );
 
-      setSelectedReport(response.data);
+      setSelectedReport(
+        response.data
+      );
     } catch (err) {
-      console.error('View report error:', err);
+      console.error(
+        'View report error:',
+        err
+      );
 
       setError(
         err.response?.data?.message ||
-        'Could not load report details.'
+          'Could not load report details.'
       );
     } finally {
       setLoadingReport(false);
@@ -123,152 +182,37 @@ const [data, setData] = useState(null);
   }
 
 
-  /*
-   * ============================================================
-   * CLOSE REPORT MODAL
-   * ============================================================
-   */
-  function closeReportModal() {
-    setSelectedReport(null);
-  }
+  /* ============================================================
+     REFRESH
+  ============================================================ */
 
+  async function handleRefresh() {
+    setRefreshing(true);
 
-  /*
-   * ============================================================
-   * LOAD WORKERS
-   * ============================================================
-   */
-  async function loadWorkers() {
     try {
-      setLoadingWorkers(true);
-      setError('');
-
-      const response = await api.get(WORKERS_ENDPOINT);
-
-      /*
-       * Supports either:
-       *
-       * [
-       *   {...}
-       * ]
-       *
-       * OR:
-       *
-       * {
-       *   workers: [...]
-       * }
-       */
-      const workerData = Array.isArray(response.data)
-        ? response.data
-        : response.data.workers || [];
-
-      setWorkers(workerData);
-    } catch (err) {
-      console.error('Worker loading error:', err);
-
-      setError(
-        err.response?.data?.message ||
-        'Could not load workers.'
-      );
+      await load();
     } finally {
-      setLoadingWorkers(false);
-    }
-  }
-
-
-  /*
-   * ============================================================
-   * OPEN ASSIGNMENT MODAL
-   * ============================================================
-   */
-  async function openAssignmentModal(report) {
-    setAssignmentReport(report);
-    setSelectedWorkerId('');
-    setSuccess('');
-    setError('');
-
-    await loadWorkers();
-  }
-
-
-  /*
-   * ============================================================
-   * CLOSE ASSIGNMENT MODAL
-   * ============================================================
-   */
-  function closeAssignmentModal() {
-    if (assigning) {
-      return;
-    }
-
-    setAssignmentReport(null);
-    setSelectedWorkerId('');
-  }
-
-
-  /*
-   * ============================================================
-   * ASSIGN REPORT
-   * ============================================================
-   */
-  async function assignReport() {
-    if (!assignmentReport) {
-      return;
-    }
-
-    if (!selectedWorkerId) {
-      setError('Please select a worker.');
-      return;
-    }
-
-    try {
-      setAssigning(true);
-      setError('');
-      setSuccess('');
-
-      await api.post(ASSIGNMENT_ENDPOINT, {
-        reportId: assignmentReport.ReportID,
-        workerId: Number(selectedWorkerId)
-      });
-
-      setSuccess(
-        `Report ${assignmentReport.ReportCode} was assigned successfully.`
-      );
-
-      /*
-       * Close assignment modal after successful assignment.
-       */
       setTimeout(() => {
-        setAssignmentReport(null);
-        setSelectedWorkerId('');
-        load();
-      }, 800);
-
-    } catch (err) {
-      console.error('Assignment error:', err);
-
-      setError(
-        err.response?.data?.message ||
-        'Could not assign this report.'
-      );
-    } finally {
-      setAssigning(false);
+        setRefreshing(false);
+      }, 450);
     }
   }
 
 
-  /*
-   * ============================================================
-   * EXPORT REPORTS TO CSV
-   * ============================================================
-   */
+  /* ============================================================
+     EXPORT CSV
+  ============================================================ */
+
   function handleExport() {
-    if (!data?.recentReports?.length) {
-      setError('There are no reports available to export.');
+    if (
+      recentReports.length === 0
+    ) {
+      setError(
+        'There are no reports available to export.'
+      );
+
       return;
     }
-
-    const rows = data.recentReports;
 
     const headers = [
       'Report Code',
@@ -281,48 +225,82 @@ const [data, setData] = useState(null);
       'Reported'
     ];
 
-    const csvRows = rows.map((report) => [
-      report.ReportCode,
-      report.Title,
-      report.CategoryName,
-      report.Priority,
-      report.LocationName,
-      report.Status,
-      report.WorkerName || 'Unassigned',
-      new Date(report.CreatedAt).toLocaleString()
-    ]);
 
-    const escapeCsvValue = (value) => {
-      const text = String(value ?? '');
+    const rows =
+      recentReports.map(
+        (report) => [
+          report.ReportCode,
+          report.Title,
+          report.CategoryName,
+          report.Priority,
+          report.LocationName,
+          report.Status,
+          report.WorkerName ||
+            'Unassigned',
+
+          report.CreatedAt
+            ? formatSADateTime(
+                report.CreatedAt
+              )
+            : ''
+        ]
+      );
+
+
+    function escapeCsvValue(
+      value
+    ) {
+      const text =
+        String(value ?? '');
 
       if (
         text.includes(',') ||
         text.includes('"') ||
         text.includes('\n')
       ) {
-        return `"${text.replace(/"/g, '""')}"`;
+        return `"${text.replace(
+          /"/g,
+          '""'
+        )}"`;
       }
 
       return text;
-    };
+    }
+
 
     const csvContent = [
-      headers.map(escapeCsvValue).join(','),
-      ...csvRows.map((row) =>
-        row.map(escapeCsvValue).join(',')
+      headers
+        .map(escapeCsvValue)
+        .join(','),
+
+      ...rows.map((row) =>
+        row
+          .map(escapeCsvValue)
+          .join(',')
       )
     ].join('\n');
 
-    const blob = new Blob(
-      [csvContent],
-      {
-        type: 'text/csv;charset=utf-8;'
-      }
-    );
 
-    const url = URL.createObjectURL(blob);
+    const blob =
+      new Blob(
+        [csvContent],
+        {
+          type:
+            'text/csv;charset=utf-8;'
+        }
+      );
 
-    const link = document.createElement('a');
+
+    const url =
+      URL.createObjectURL(
+        blob
+      );
+
+
+    const link =
+      document.createElement(
+        'a'
+      );
 
     link.href = url;
 
@@ -331,46 +309,72 @@ const [data, setData] = useState(null);
         .toISOString()
         .slice(0, 10)}.csv`;
 
-    document.body.appendChild(link);
+
+    document.body.appendChild(
+      link
+    );
 
     link.click();
 
-    document.body.removeChild(link);
+    link.remove();
 
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(
+      url
+    );
   }
 
 
-  /*
-   * ============================================================
-   * REFRESH
-   * ============================================================
-   */
-  async function handleRefresh() {
-    setSuccess('');
-    setError('');
+  /* ============================================================
+     LOADING
+  ============================================================ */
 
-    setRefreshing(true);
-    setRefreshAnimation(true);
-
-    await load();
-
-    setTimeout(() => {
-      setRefreshing(false);
-      setRefreshAnimation(false);
-    }, 800);
-  }
-
-
-  /*
-   * ============================================================
-   * LOADING
-   * ============================================================
-   */
   if (!data) {
     return (
       <PageTransition>
-        <Loading />
+        <div>
+          <TopBar
+            section="Admin"
+            page="Dashboard"
+            onRefresh={
+              handleRefresh
+            }
+            refreshing={
+              refreshing
+            }
+          />
+
+          <div
+            style={{
+              padding: 24
+            }}
+          >
+            {error ? (
+              <div
+                className="card"
+                style={{
+                  padding: 18,
+
+                  color:
+                    '#b42318',
+
+                  background:
+                    '#fef3f2'
+                }}
+              >
+                {error}
+              </div>
+            ) : (
+              <div
+                style={{
+                  color:
+                    'var(--text-secondary)'
+                }}
+              >
+                Loading dashboard...
+              </div>
+            )}
+          </div>
+        </div>
       </PageTransition>
     );
   }
@@ -378,60 +382,49 @@ const [data, setData] = useState(null);
 
   return (
     <PageTransition>
-      <div>
-
-        {/* =====================================================
-            TOP BAR
-            ===================================================== */}
+      <div
+        className="admin-dashboard"
+      >
         <TopBar
           section="Admin"
           page="Dashboard"
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
+          onRefresh={
+            handleRefresh
+          }
+          refreshing={
+            refreshing
+          }
         />
 
 
-        {/* =====================================================
-            PAGE
-            ===================================================== */}
-        <div
-          style={{
-            padding: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20
-          }}
+        <main
+          className="admin-dashboard-content"
         >
-
           {/* ===================================================
-              ERROR MESSAGE
-              =================================================== */}
+              ERROR
+          =================================================== */}
+
           {error && (
             <div
-              style={{
-                padding: '11px 14px',
-                borderRadius: 8,
-                background: '#fdecec',
-                color: '#c0362c',
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10
-              }}
+              className="admin-dashboard-alert"
             >
-              <span>{error}</span>
+              <AlertTriangle
+                size={17}
+                style={{
+                  flexShrink: 0
+                }}
+              />
+
+              <span>
+                {error}
+              </span>
 
               <button
-                onClick={() => setError('')}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  color: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
+                type="button"
+                onClick={() =>
+                  setError('')
+                }
+                aria-label="Dismiss error"
               >
                 <X size={15} />
               </button>
@@ -440,68 +433,58 @@ const [data, setData] = useState(null);
 
 
           {/* ===================================================
-              SUCCESS MESSAGE
-              =================================================== */}
-          {success && (
-            <div
-              style={{
-                padding: '11px 14px',
-                borderRadius: 8,
-                background: '#eaf8ef',
-                color: '#16803c',
-                fontSize: 13
-              }}
-            >
-              {success}
-            </div>
-          )}
-
-
-          {/* ===================================================
               RECENT REPORTS
-              =================================================== */}
-          <div className="card">
+          =================================================== */}
 
-            {/* HEADER */}
+          <section
+            className="card admin-dashboard-panel"
+          >
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px 20px',
-                borderBottom:
-                  '1px solid var(--border)'
-              }}
+              className="admin-dashboard-panel-header"
             >
-              <strong>
-                Recent Reports
-              </strong>
+              <div>
+                <strong>
+                  Recent Reports
+                </strong>
+
+                <div
+                  className="admin-dashboard-panel-subtitle"
+                >
+                  Latest municipal
+                  reports requiring
+                  oversight.
+                </div>
+              </div>
+
+
+              <button
+                type="button"
+                className="btn btn-outline admin-export-button"
+                onClick={
+                  handleExport
+                }
+              >
+                <Download
+                  size={15}
+                />
+
+                <span>
+                  Export CSV
+                </span>
+              </button>
             </div>
 
 
-            {/* TABLE */}
+            {/* =================================================
+                DESKTOP TABLE
+            ================================================= */}
+
             <div
-              style={{
-                overflowX: 'auto'
-              }}
+              className="admin-desktop-table"
             >
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: 13
-                }}
-              >
+              <table>
                 <thead>
-                  <tr
-                    style={{
-                      textAlign: 'left',
-                      color:
-                        'var(--text-secondary)',
-                      fontSize: 11,
-                      textTransform:
-                        'uppercase'
-                    }}
-                  >
+                  <tr>
                     {[
                       'ID',
                       'Issue',
@@ -512,80 +495,48 @@ const [data, setData] = useState(null);
                       'Worker',
                       'Reported',
                       'Actions'
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        style={{
-                          padding:
-                            '10px 16px',
-                          fontWeight: 700,
-                          whiteSpace:
-                            'nowrap'
-                        }}
-                      >
-                        {heading}
-                      </th>
-                    ))}
+                    ].map(
+                      (heading) => (
+                        <th
+                          key={
+                            heading
+                          }
+                        >
+                          {heading}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
 
 
                 <tbody>
-                  {data.recentReports.map(
+                  {recentReports.map(
                     (report) => (
                       <tr
                         key={
                           report.ReportID
                         }
-                        style={{
-                          borderTop:
-                            '1px solid var(--border)'
-                        }}
                       >
-
-                        {/* ID */}
                         <td
-                          style={{
-                            padding:
-                              '12px 16px',
-                            fontWeight: 700,
-                            whiteSpace:
-                              'nowrap'
-                          }}
+                          className="admin-report-code"
                         >
-                          #{report.ReportCode}
+                          #
+                          {
+                            report.ReportCode
+                          }
                         </td>
 
-
-                        {/* ISSUE */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
+                        <td>
                           {report.Title}
                         </td>
 
-
-                        {/* CATEGORY */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
-                          {report.CategoryName}
+                        <td>
+                          {report.CategoryName ||
+                            '—'}
                         </td>
 
-
-                        {/* PRIORITY */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
+                        <td>
                           <PriorityDot
                             priority={
                               report.Priority
@@ -593,32 +544,14 @@ const [data, setData] = useState(null);
                           />
                         </td>
 
-
-                        {/* LOCATION */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
-                          {report.LocationName}
+                        <td>
+                          {report.LocationName ||
+                            '—'}
                         </td>
 
-
-                        {/* STATUS */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
+                        <td>
                           <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              flexWrap: 'wrap'
-                            }}
+                            className="admin-status-group"
                           >
                             <StatusBadge
                               status={
@@ -627,231 +560,276 @@ const [data, setData] = useState(null);
                             />
 
                             {report.IsLate && (
-                              <span
-                                className="badge"
-                                title="This report has been open longer than its SLA allows for its priority"
-                                style={{
-                                  background: '#fee2e2',
-                                  color: '#991b1b',
-                                  fontWeight: 700
-                                }}
-                              >
-                                LATE
-                              </span>
+                              <LateBadge />
                             )}
                           </div>
                         </td>
 
-
-                        {/* WORKER */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
+                        <td>
                           {report.WorkerName ||
-                            '—'}
+                            'Unassigned'}
                         </td>
 
-
-                        {/* DATE */}
                         <td
                           style={{
-                            padding:
-                              '12px 16px',
                             whiteSpace:
                               'nowrap'
                           }}
                         >
-                          {new Date(
-                            report.CreatedAt
-                          ).toLocaleDateString()}
+                          {report.CreatedAt
+                            ? formatSADateTime(
+                                report.CreatedAt
+                              )
+                            : '—'}
                         </td>
 
-
-                        {/* ACTIONS */}
-                        <td
-                          style={{
-                            padding:
-                              '12px 16px'
-                          }}
-                        >
-                          <div
-                            style={{
-                              display:
-                                'flex',
-                              gap: 6,
-                              alignItems:
-                                'center'
-                            }}
+                        <td>
+                          <button
+                            type="button"
+                            className="admin-icon-button"
+                            title="View report"
+                            aria-label={`View ${report.ReportCode}`}
+                            onClick={() =>
+                              viewReport(
+                                report
+                              )
+                            }
                           >
-
-                            {/* VIEW */}
-                            <IconBtn
-                              icon={
-                                <Eye
-                                  size={14}
-                                />
-                              }
-                              title="View report"
-                              onClick={() =>
-                                viewReport(
-                                  report
-                                )
-                              }
+                            <Eye
+                              size={15}
                             />
-
-
-                            {/* RESOLVE */}
-                            {report.Status ===
-                              'In Progress' && (
-                              <IconBtn
-                                icon={
-                                  <CheckCircle
-                                    size={14}
-                                  />
-                                }
-                                green
-                                title="Mark as resolved"
-                              />
-                            )}
-
-                          </div>
+                          </button>
                         </td>
-
                       </tr>
                     )
                   )}
 
 
-                  {/* NO REPORTS */}
-                  {data.recentReports
-                    .length === 0 && (
+                  {recentReports.length ===
+                    0 && (
                     <tr>
                       <td
                         colSpan={9}
-                        style={{
-                          padding: 30,
-                          textAlign:
-                            'center',
-                          color:
-                            'var(--text-secondary)'
-                        }}
+                        className="admin-empty-cell"
                       >
                         No recent reports.
                       </td>
                     </tr>
                   )}
-
                 </tbody>
               </table>
             </div>
-          </div>
+
+
+            {/* =================================================
+                MOBILE REPORT CARDS
+            ================================================= */}
+
+            <div
+              className="admin-mobile-reports"
+            >
+              {recentReports.map(
+                (report) => (
+                  <article
+                    key={
+                      report.ReportID
+                    }
+                    className="admin-mobile-report-card"
+                  >
+                    <div
+                      className="admin-mobile-report-top"
+                    >
+                      <div
+                        style={{
+                          minWidth: 0
+                        }}
+                      >
+                        <div
+                          className="admin-mobile-report-code"
+                        >
+                          #
+                          {
+                            report.ReportCode
+                          }
+                        </div>
+
+                        <h3>
+                          {report.Title ||
+                            'Untitled report'}
+                        </h3>
+                      </div>
+
+
+                      <div
+                        className="admin-status-group"
+                      >
+                        <StatusBadge
+                          status={
+                            report.Status
+                          }
+                        />
+
+                        {report.IsLate && (
+                          <LateBadge />
+                        )}
+                      </div>
+                    </div>
+
+
+                    <div
+                      className="admin-mobile-report-grid"
+                    >
+                      <MobileField
+                        label="Category"
+                        value={
+                          report.CategoryName ||
+                          '—'
+                        }
+                      />
+
+                      <MobileField
+                        label="Priority"
+                        value={
+                          <PriorityDot
+                            priority={
+                              report.Priority
+                            }
+                          />
+                        }
+                      />
+
+                      <MobileField
+                        label="Location"
+                        value={
+                          report.LocationName ||
+                          '—'
+                        }
+                      />
+
+                      <MobileField
+                        label="Worker"
+                        value={
+                          report.WorkerName ||
+                          'Unassigned'
+                        }
+                      />
+                    </div>
+
+
+                    <div
+                      className="admin-mobile-report-date"
+                    >
+                      Reported{' '}
+
+                      {report.CreatedAt
+                        ? formatSADateTime(
+                            report.CreatedAt
+                          )
+                        : '—'}
+                    </div>
+
+
+                    <button
+                      type="button"
+                      className="btn btn-primary admin-mobile-view-button"
+                      onClick={() =>
+                        viewReport(
+                          report
+                        )
+                      }
+                    >
+                      <Eye
+                        size={15}
+                      />
+
+                      View Report
+                    </button>
+                  </article>
+                )
+              )}
+
+
+              {recentReports.length ===
+                0 && (
+                <div
+                  className="admin-mobile-empty"
+                >
+                  No recent reports.
+                </div>
+              )}
+            </div>
+          </section>
 
 
           {/* ===================================================
               LOWER SECTION
-              =================================================== */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 20,
-              flexWrap: 'wrap'
-            }}
-          >
+          =================================================== */}
 
-            {/* WORKER OVERVIEW */}
-            <div
-              className="card"
-              style={{
-                flex: 1,
-                minWidth: 400
-              }}
+          <div
+            className="admin-dashboard-lower-grid"
+          >
+            {/* =================================================
+                WORKER OVERVIEW
+            ================================================= */}
+
+            <section
+              className="card admin-dashboard-panel"
             >
               <div
-                style={{
-                  padding:
-                    '16px 20px',
-                  borderBottom:
-                    '1px solid var(--border)',
-                  fontWeight: 700
-                }}
+                className="admin-dashboard-panel-header"
               >
-                Worker Overview
+                <div
+                  className="admin-panel-title-icon"
+                >
+                  <Users
+                    size={17}
+                  />
+
+                  <strong>
+                    Worker Overview
+                  </strong>
+                </div>
               </div>
 
+
+              {/* DESKTOP */}
+
               <div
-                style={{
-                  overflowX: 'auto'
-                }}
+                className="admin-desktop-table admin-worker-table"
               >
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse:
-                      'collapse',
-                    fontSize: 13
-                  }}
-                >
+                <table>
                   <thead>
-                    <tr
-                      style={{
-                        textAlign:
-                          'left',
-                        color:
-                          'var(--text-secondary)',
-                        fontSize: 11,
-                        textTransform:
-                          'uppercase'
-                      }}
-                    >
-                      <th
-                        style={{
-                          padding:
-                            '10px 16px'
-                        }}
-                      >
+                    <tr>
+                      <th>
                         Worker
                       </th>
 
-                      <th
-                        style={{
-                          padding:
-                            '10px 16px'
-                        }}
-                      >
+                      <th>
                         Department
                       </th>
 
-                      <th
-                        style={{
-                          padding:
-                            '10px 16px'
-                        }}
-                      >
+                      <th>
                         Active Issues
                       </th>
                     </tr>
                   </thead>
 
+
                   <tbody>
-                    {data.workerOverview.map(
-                      (worker) => (
+                    {workerOverview.map(
+                      (
+                        worker,
+                        index
+                      ) => (
                         <tr
                           key={
-                            worker.WorkerName
+                            `${worker.WorkerName}-${index}`
                           }
-                          style={{
-                            borderTop:
-                              '1px solid var(--border)'
-                          }}
                         >
                           <td
                             style={{
-                              padding:
-                                '10px 16px',
-                              fontWeight: 600
+                              fontWeight:
+                                700
                             }}
                           >
                             {
@@ -859,28 +837,19 @@ const [data, setData] = useState(null);
                             }
                           </td>
 
-                          <td
-                            style={{
-                              padding:
-                                '10px 16px'
-                            }}
-                          >
+                          <td>
                             {
                               worker.DepartmentName
                             }
                           </td>
 
-                          <td
-                            style={{
-                              padding:
-                                '10px 16px'
-                            }}
-                          >
+                          <td>
                             <span
                               className="badge"
                               style={{
                                 background:
                                   'var(--gold-100)',
+
                                 color:
                                   'var(--gold-600)'
                               }}
@@ -894,18 +863,13 @@ const [data, setData] = useState(null);
                       )
                     )}
 
-                    {data.workerOverview
-                      .length === 0 && (
+
+                    {workerOverview.length ===
+                      0 && (
                       <tr>
                         <td
                           colSpan={3}
-                          style={{
-                            padding: 20,
-                            textAlign:
-                              'center',
-                            color:
-                              'var(--text-secondary)'
-                          }}
+                          className="admin-empty-cell"
                         >
                           No worker data.
                         </td>
@@ -914,231 +878,898 @@ const [data, setData] = useState(null);
                   </tbody>
                 </table>
               </div>
-            </div>
 
 
-            {/* RECENT ACTIVITY */}
-            <div
-              className="card"
-              style={{
-                flex: 1,
-                minWidth: 350,
-                padding: 20
-              }}
-            >
-              <div
-                style={{
-                  fontWeight: 700,
-                  marginBottom: 14
-                }}
-              >
-                Recent Activity
-              </div>
+              {/* MOBILE */}
 
               <div
-                style={{
-                  display:
-                    'flex',
-                  flexDirection:
-                    'column',
-                  gap: 12
-                }}
+                className="admin-mobile-workers"
               >
-                {data.recentReports
-                  .slice(0, 4)
-                  .map((report) => (
-                    <div
+                {workerOverview.map(
+                  (
+                    worker,
+                    index
+                  ) => (
+                    <article
                       key={
-                        report.ReportID
+                        `${worker.WorkerName}-${index}`
                       }
-                      style={{
-                        fontSize: 13,
-                        paddingBottom:
-                          10,
-                        borderBottom:
-                          '1px solid var(--border)'
-                      }}
+                      className="admin-mobile-worker-card"
                     >
-                      <strong>
-                        {report.Status}
-                      </strong>
+                      <div
+                        className="admin-worker-avatar"
+                      >
+                        {getInitials(
+                          worker.WorkerName
+                        )}
+                      </div>
+
 
                       <div
                         style={{
-                          color:
-                            'var(--text-secondary)',
-                          fontSize: 12,
-                          marginTop: 3
+                          minWidth: 0,
+                          flex: 1
                         }}
                       >
-                        {new Date(
-                          report.CreatedAt
-                        ).toLocaleString()}{' '}
-                        —{' '}
-                        {report.WorkerName ||
-                          'Unassigned'}
-                      </div>
-                    </div>
-                  ))}
+                        <strong>
+                          {
+                            worker.WorkerName
+                          }
+                        </strong>
 
-                {data.recentReports.length ===
+                        <div>
+                          {
+                            worker.DepartmentName ||
+                            'No department'
+                          }
+                        </div>
+                      </div>
+
+
+                      <span
+                        className="badge"
+                        style={{
+                          background:
+                            'var(--gold-100)',
+
+                          color:
+                            'var(--gold-600)'
+                        }}
+                      >
+                        {
+                          worker.ActiveIssues
+                        }{' '}
+                        active
+                      </span>
+                    </article>
+                  )
+                )}
+
+
+                {workerOverview.length ===
                   0 && (
                   <div
-                    style={{
-                      color:
-                        'var(--text-secondary)',
-                      fontSize: 13
-                    }}
+                    className="admin-mobile-empty"
+                  >
+                    No worker data.
+                  </div>
+                )}
+              </div>
+            </section>
+
+
+            {/* =================================================
+                RECENT ACTIVITY
+            ================================================= */}
+
+            <section
+              className="card admin-dashboard-panel"
+            >
+              <div
+                className="admin-dashboard-panel-header"
+              >
+                <div
+                  className="admin-panel-title-icon"
+                >
+                  <Activity
+                    size={17}
+                  />
+
+                  <strong>
+                    Recent Activity
+                  </strong>
+                </div>
+              </div>
+
+
+              <div
+                className="admin-activity-list"
+              >
+                {recentReports
+                  .slice(0, 4)
+                  .map(
+                    (report) => (
+                      <article
+                        key={
+                          report.ReportID
+                        }
+                        className="admin-activity-item"
+                      >
+                        <div
+                          className="admin-activity-marker"
+                        />
+
+                        <div
+                          style={{
+                            minWidth: 0
+                          }}
+                        >
+                          <strong>
+                            {report.Status}
+                          </strong>
+
+                          <p>
+                            {report.Title}
+                          </p>
+
+                          <span>
+                            {report.CreatedAt
+                              ? formatSADateTime(
+                                  report.CreatedAt
+                                )
+                              : 'Unknown time'}
+
+                            {' · '}
+
+                            {report.WorkerName ||
+                              'Unassigned'}
+                          </span>
+                        </div>
+                      </article>
+                    )
+                  )}
+
+
+                {recentReports.length ===
+                  0 && (
+                  <div
+                    className="admin-mobile-empty"
                   >
                     No recent activity.
                   </div>
                 )}
               </div>
-            </div>
-
+            </section>
           </div>
-        </div>
+        </main>
 
 
         {/* =====================================================
-            REPORT DETAILS MODAL
-            ===================================================== */}
+            REPORT MODAL
+        ===================================================== */}
+
         {selectedReport && (
           <ReportModal
             report={selectedReport}
             getPhotoUrl={getPhotoUrl}
-            onClose={closeReportModal}
-          />
-        )}
-
-
-        {/* =====================================================
-            ASSIGN WORKER MODAL
-            ===================================================== */}
-        {assignmentReport && (
-          <AssignmentModal
-            report={assignmentReport}
-            workers={workers}
-            selectedWorkerId={
-              selectedWorkerId
-            }
-            setSelectedWorkerId={
-              setSelectedWorkerId
-            }
-            loadingWorkers={
-              loadingWorkers
-            }
-            assigning={assigning}
-            onAssign={assignReport}
-            onClose={
-              closeAssignmentModal
+            onClose={() =>
+              setSelectedReport(
+                null
+              )
             }
           />
         )}
 
-        {/* =====================================================
-    SYSTEM REFRESH LOADING
-    ===================================================== */}
-
-      {refreshAnimation && (
-        <div
-          style={{
-            position:'fixed',
-            inset:0,
-            zIndex:9998,
-            background:'rgba(255,255,255,0.35)',
-            backdropFilter:'blur(3px)',
-            display:'flex',
-            alignItems:'center',
-            justifyContent:'center'
-          }}
-        >
-
-          <div
-            style={{
-              width:55,
-              height:55,
-              borderRadius:'50%',
-              border:'5px solid #dbeafe',
-              borderTop:'5px solid #2563eb',
-              animation:'refreshSpin 0.9s linear infinite'
-            }}
-          />
-
-          <style>
-            {`
-              @keyframes refreshSpin {
-                from {
-                  transform:rotate(0deg);
-                }
-
-                to {
-                  transform:rotate(360deg);
-                }
-              }
-            `}
-          </style>
-
-        </div>
-      )}
-
 
         {/* =====================================================
-            REPORT LOADING
-            ===================================================== */}
+            LOADING REPORT
+        ===================================================== */}
+
         {loadingReport && (
           <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 10000,
-              background:
-                'rgba(15, 23, 42, 0.25)',
-              backdropFilter:
-                'blur(2px)',
-              display: 'flex',
-              alignItems:
-                'center',
-              justifyContent:
-                'center'
-            }}
+            className="admin-loading-overlay"
           >
             <div
-              style={{
-                background:
-                  'white',
-                padding:
-                  '20px 28px',
-                borderRadius: 10,
-                boxShadow:
-                  '0 10px 40px rgba(0,0,0,0.2)',
-                fontSize: 14,
-                fontWeight: 600
-              }}
+              className="card admin-loading-box"
             >
               Loading report...
             </div>
           </div>
         )}
 
+
+        {/* =====================================================
+            DASHBOARD RESPONSIVE CSS
+        ===================================================== */}
+
+        <style>
+          {`
+            .admin-dashboard-content {
+              width: 100%;
+
+              padding: 24px;
+
+              display: flex;
+
+              flex-direction: column;
+
+              gap: 20px;
+            }
+
+
+            .admin-dashboard-alert {
+              padding:
+                11px 14px;
+
+              border-radius: 9px;
+
+              background:
+                #fdecec;
+
+              color:
+                #c0362c;
+
+              font-size: 13px;
+
+              display: flex;
+
+              align-items:
+                flex-start;
+
+              gap: 9px;
+            }
+
+
+            .admin-dashboard-alert span {
+              flex: 1;
+            }
+
+
+            .admin-dashboard-alert button {
+              border: none;
+
+              background:
+                transparent;
+
+              color: inherit;
+
+              padding: 0;
+
+              display: flex;
+
+              align-items: center;
+            }
+
+
+            .admin-dashboard-panel {
+              min-width: 0;
+
+              overflow: hidden;
+            }
+
+
+            .admin-dashboard-panel-header {
+              min-height: 58px;
+
+              display: flex;
+
+              align-items: center;
+
+              justify-content:
+                space-between;
+
+              gap: 14px;
+
+              padding:
+                14px 20px;
+
+              border-bottom:
+                1px solid var(--border);
+            }
+
+
+            .admin-dashboard-panel-subtitle {
+              margin-top: 3px;
+
+              color:
+                var(--text-secondary);
+
+              font-size: 11.5px;
+            }
+
+
+            .admin-panel-title-icon {
+              display: flex;
+
+              align-items: center;
+
+              gap: 8px;
+            }
+
+
+            .admin-desktop-table {
+              width: 100%;
+
+              overflow-x: auto;
+            }
+
+
+            .admin-desktop-table table {
+              width: 100%;
+
+              border-collapse:
+                collapse;
+
+              font-size: 13px;
+            }
+
+
+            .admin-desktop-table th {
+              padding:
+                10px 16px;
+
+              text-align: left;
+
+              color:
+                var(--text-secondary);
+
+              font-size: 10.5px;
+
+              text-transform:
+                uppercase;
+
+              font-weight: 800;
+
+              white-space:
+                nowrap;
+            }
+
+
+            .admin-desktop-table td {
+              padding:
+                12px 16px;
+
+              border-top:
+                1px solid var(--border);
+
+              vertical-align:
+                middle;
+            }
+
+
+            .admin-report-code {
+              font-weight: 800;
+
+              white-space: nowrap;
+            }
+
+
+            .admin-status-group {
+              display: flex;
+
+              align-items: center;
+
+              flex-wrap: wrap;
+
+              gap: 6px;
+            }
+
+
+            .admin-icon-button {
+              width: 32px;
+
+              height: 32px;
+
+              border-radius: 50%;
+
+              border:
+                1px solid var(--border);
+
+              background:
+                var(--bg-page);
+
+              color:
+                var(--text-secondary);
+
+              display:
+                inline-flex;
+
+              align-items: center;
+
+              justify-content:
+                center;
+            }
+
+
+            .admin-empty-cell {
+              padding:
+                28px !important;
+
+              text-align: center;
+
+              color:
+                var(--text-secondary);
+            }
+
+
+            .admin-mobile-reports,
+            .admin-mobile-workers {
+              display: none;
+            }
+
+
+            .admin-dashboard-lower-grid {
+              display: grid;
+
+              grid-template-columns:
+                minmax(0, 1.25fr)
+                minmax(300px, 0.75fr);
+
+              gap: 20px;
+            }
+
+
+            .admin-activity-list {
+              padding:
+                6px 20px 14px;
+            }
+
+
+            .admin-activity-item {
+              display: flex;
+
+              gap: 11px;
+
+              padding:
+                12px 0;
+
+              border-bottom:
+                1px solid var(--border);
+            }
+
+
+            .admin-activity-item:last-child {
+              border-bottom: none;
+            }
+
+
+            .admin-activity-marker {
+              width: 9px;
+
+              height: 9px;
+
+              border-radius: 50%;
+
+              margin-top: 5px;
+
+              background:
+                var(--gold-500);
+
+              flex-shrink: 0;
+            }
+
+
+            .admin-activity-item strong {
+              font-size: 12.5px;
+            }
+
+
+            .admin-activity-item p {
+              margin:
+                3px 0;
+
+              font-size: 12px;
+
+              color:
+                var(--text-primary);
+
+              overflow-wrap:
+                anywhere;
+            }
+
+
+            .admin-activity-item span {
+              color:
+                var(--text-secondary);
+
+              font-size: 11px;
+            }
+
+
+            .admin-loading-overlay {
+              position: fixed;
+
+              inset: 0;
+
+              z-index: 10000;
+
+              background:
+                rgba(
+                  15,
+                  23,
+                  42,
+                  0.25
+                );
+
+              backdrop-filter:
+                blur(2px);
+
+              display: flex;
+
+              align-items: center;
+
+              justify-content:
+                center;
+
+              padding: 16px;
+            }
+
+
+            .admin-loading-box {
+              padding:
+                18px 24px;
+
+              font-size: 14px;
+
+              font-weight: 700;
+            }
+
+
+            @media (max-width: 1100px) {
+              .admin-dashboard-lower-grid {
+                grid-template-columns:
+                  1fr;
+              }
+            }
+
+
+            @media (max-width: 760px) {
+              .admin-dashboard-content {
+                padding: 16px;
+
+                gap: 16px;
+              }
+
+
+              .admin-dashboard-panel-header {
+                padding:
+                  14px 16px;
+              }
+
+
+              .admin-desktop-table {
+                display: none;
+              }
+
+
+              .admin-mobile-reports,
+              .admin-mobile-workers {
+                display: flex;
+
+                flex-direction:
+                  column;
+              }
+
+
+              .admin-mobile-report-card {
+                padding: 16px;
+
+                border-bottom:
+                  1px solid var(--border);
+              }
+
+
+              .admin-mobile-report-card:last-child {
+                border-bottom:
+                  none;
+              }
+
+
+              .admin-mobile-report-top {
+                display: flex;
+
+                align-items:
+                  flex-start;
+
+                justify-content:
+                  space-between;
+
+                gap: 12px;
+              }
+
+
+              .admin-mobile-report-code {
+                color:
+                  var(--text-secondary);
+
+                font-size: 10.5px;
+
+                font-weight: 800;
+
+                margin-bottom: 4px;
+              }
+
+
+              .admin-mobile-report-card h3 {
+                margin: 0;
+
+                font-size: 14.5px;
+
+                line-height: 1.4;
+
+                overflow-wrap:
+                  anywhere;
+              }
+
+
+              .admin-mobile-report-grid {
+                display: grid;
+
+                grid-template-columns:
+                  repeat(
+                    2,
+                    minmax(0, 1fr)
+                  );
+
+                gap:
+                  12px 14px;
+
+                margin-top: 16px;
+              }
+
+
+              .admin-mobile-field {
+                min-width: 0;
+              }
+
+
+              .admin-mobile-field-label {
+                display: block;
+
+                color:
+                  var(--text-secondary);
+
+                font-size: 10px;
+
+                text-transform:
+                  uppercase;
+
+                font-weight: 800;
+
+                margin-bottom: 4px;
+              }
+
+
+              .admin-mobile-field-value {
+                font-size: 12.5px;
+
+                overflow-wrap:
+                  anywhere;
+              }
+
+
+              .admin-mobile-report-date {
+                margin-top: 14px;
+
+                padding-top: 12px;
+
+                border-top:
+                  1px solid var(--border);
+
+                color:
+                  var(--text-secondary);
+
+                font-size: 11px;
+              }
+
+
+              .admin-mobile-view-button {
+                width: 100%;
+
+                margin-top: 12px;
+              }
+
+
+              .admin-mobile-worker-card {
+                display: flex;
+
+                align-items: center;
+
+                gap: 11px;
+
+                padding:
+                  14px 16px;
+
+                border-bottom:
+                  1px solid var(--border);
+              }
+
+
+              .admin-mobile-worker-card:last-child {
+                border-bottom:
+                  none;
+              }
+
+
+              .admin-mobile-worker-card strong {
+                display: block;
+
+                font-size: 13px;
+
+                overflow-wrap:
+                  anywhere;
+              }
+
+
+              .admin-mobile-worker-card
+              div div {
+                margin-top: 3px;
+
+                color:
+                  var(--text-secondary);
+
+                font-size: 11.5px;
+
+                overflow-wrap:
+                  anywhere;
+              }
+
+
+              .admin-worker-avatar {
+                width: 36px;
+
+                height: 36px;
+
+                border-radius: 50%;
+
+                display: flex;
+
+                align-items: center;
+
+                justify-content:
+                  center;
+
+                background:
+                  var(--navy-800);
+
+                color: white;
+
+                font-size: 11px;
+
+                font-weight: 800;
+
+                flex-shrink: 0;
+              }
+
+
+              .admin-mobile-empty {
+                padding:
+                  24px 16px;
+
+                text-align:
+                  center;
+
+                color:
+                  var(--text-secondary);
+
+                font-size: 12.5px;
+              }
+            }
+
+
+            @media (max-width: 430px) {
+              .admin-dashboard-panel-header {
+                align-items:
+                  flex-start;
+              }
+
+
+              .admin-export-button {
+                width:
+                  38px !important;
+
+                height:
+                  38px !important;
+
+                padding:
+                  0 !important;
+
+                flex-shrink: 0;
+              }
+
+
+              .admin-export-button span {
+                display: none;
+              }
+
+
+              .admin-mobile-report-top {
+                flex-direction:
+                  column;
+              }
+
+
+              .admin-mobile-report-grid {
+                grid-template-columns:
+                  1fr;
+
+                gap: 9px;
+              }
+
+
+              .admin-mobile-worker-card {
+                align-items:
+                  flex-start;
+
+                flex-wrap: wrap;
+              }
+            }
+          `}
+        </style>
       </div>
     </PageTransition>
   );
 }
 
 
-/* ============================================================
-   REPORT DETAILS MODAL
-   ============================================================ */
+/* =============================================================
+   MOBILE FIELD
+============================================================= */
+
+function MobileField({
+  label,
+  value
+}) {
+  return (
+    <div
+      className="admin-mobile-field"
+    >
+      <span
+        className="admin-mobile-field-label"
+      >
+        {label}
+      </span>
+
+      <div
+        className="admin-mobile-field-value"
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+
+/* =============================================================
+   LATE BADGE
+============================================================= */
+
+function LateBadge() {
+  return (
+    <span
+      className="badge"
+      title="This report has been open longer than its SLA allows for its priority"
+      style={{
+        background: '#fee2e2',
+        color: '#991b1b',
+        fontWeight: 800
+      }}
+    >
+      LATE
+    </span>
+  );
+}
+
+
+/* =============================================================
+   REPORT MODAL
+============================================================= */
 
 function ReportModal({
   report,
   getPhotoUrl,
   onClose
 }) {
-  /*
-   * Close with Escape.
-   */
   useEffect(() => {
     function handleEscape(e) {
       if (e.key === 'Escape') {
@@ -1161,144 +1792,83 @@ function ReportModal({
 
 
   function handleBackdropClick(e) {
-    if (e.target === e.currentTarget) {
+    if (
+      e.target ===
+      e.currentTarget
+    ) {
       onClose();
     }
   }
 
 
+  const photos =
+    Array.isArray(
+      report.Photos
+    )
+      ? report.Photos
+      : [];
+
+
+  const updates =
+    Array.isArray(
+      report.Updates
+    )
+      ? report.Updates
+      : [];
+
+
   return (
     <div
-      onClick={handleBackdropClick}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-
-        background:
-          'rgba(15, 23, 42, 0.35)',
-
-        backdropFilter:
-          'blur(3px)',
-
-        WebkitBackdropFilter:
-          'blur(3px)',
-
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-
-        padding: 20
-      }}
+      className="admin-report-modal-backdrop"
+      onClick={
+        handleBackdropClick
+      }
     >
       <div
-        style={{
-          position: 'relative',
-
-          width: '100%',
-          maxWidth: 850,
-
-          maxHeight: '90vh',
-          overflowY: 'auto',
-
-          background:
-            'var(--bg-card, white)',
-
-          borderRadius: 14,
-
-          boxShadow:
-            '0 20px 60px rgba(0,0,0,0.25)',
-
-          padding: 24
-        }}
+        className="admin-report-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Report details"
       >
-
-        {/* CLOSE */}
         <button
+          type="button"
+          className="admin-report-modal-close"
           onClick={onClose}
-          title="Close"
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-
-            width: 36,
-            height: 36,
-
-            borderRadius: '50%',
-            border:
-              '1px solid var(--border)',
-
-            background:
-              'var(--bg-page)',
-
-            display: 'flex',
-            alignItems:
-              'center',
-            justifyContent:
-              'center',
-
-            cursor: 'pointer',
-
-            zIndex: 2
-          }}
+          aria-label="Close report"
         >
           <X size={18} />
         </button>
 
 
         {/* HEADER */}
-        <div
-          style={{
-            paddingRight: 50,
-            paddingBottom: 18,
-            borderBottom:
-              '1px solid var(--border)',
-            marginBottom: 20
-          }}
+
+        <header
+          className="admin-report-modal-header"
         >
-          <div
-            style={{
-              fontSize: 11,
-              color:
-                'var(--text-secondary)',
-              textTransform:
-                'uppercase',
-              marginBottom: 5
-            }}
-          >
-            Report ID
-          </div>
+          <div>
+            <div
+              className="admin-report-modal-eyebrow"
+            >
+              Report ID
+            </div>
 
-          <div
-            style={{
-              fontSize: 20,
-              fontWeight: 800
-            }}
-          >
-            #{report.ReportCode}
-          </div>
+            <div
+              className="admin-report-modal-code"
+            >
+              #{report.ReportCode}
+            </div>
 
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 17,
-              fontWeight: 700
-            }}
-          >
-            {report.Title}
+            <h2>
+              {report.Title}
+            </h2>
           </div>
-        </div>
+        </header>
 
 
         {/* DETAILS */}
+
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 18
-          }}
+          className="admin-report-detail-grid"
         >
           <DetailItem
             label="Status"
@@ -1325,7 +1895,8 @@ function ReportModal({
           <DetailItem
             label="Category"
             value={
-              report.CategoryName
+              report.CategoryName ||
+              '—'
             }
           />
 
@@ -1347,639 +1918,567 @@ function ReportModal({
 
           <DetailItem
             label="Reported"
-            value={new Date(
+            value={
               report.CreatedAt
-            ).toLocaleString()}
+                ? formatSADateTime(
+                    report.CreatedAt
+                  )
+                : '—'
+            }
           />
         </div>
 
 
         {/* DESCRIPTION */}
-        <div
-          style={{
-            marginTop: 22
-          }}
+
+        <section
+          className="admin-report-modal-section"
         >
           <SectionTitle>
-            DESCRIPTION
+            Description
           </SectionTitle>
 
           <div
-            style={{
-              padding: 14,
-              borderRadius: 8,
-              background:
-                'var(--bg-page)',
-              lineHeight: 1.6,
-              fontSize: 13
-            }}
+            className="admin-report-description"
           >
             {report.Description ||
               'No description provided.'}
           </div>
-        </div>
+        </section>
 
 
         {/* PHOTOS */}
-        <div
-          style={{
-            marginTop: 22
-          }}
+
+        <section
+          className="admin-report-modal-section"
         >
           <SectionTitle>
-            PHOTOS
-            {report.Photos?.length
-              ? ` (${report.Photos.length})`
+            Photos
+
+            {photos.length > 0
+              ? ` (${photos.length})`
               : ''}
           </SectionTitle>
 
-          {report.Photos?.length > 0 ? (
+
+          {photos.length > 0 ? (
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns:
-                  'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: 12
-              }}
+              className="admin-report-photo-grid"
             >
-              {report.Photos.map(
-                (photo, index) => {
-                  const photoUrl =
-                    getPhotoUrl(
-                      photo
-                    );
-
-                  return (
-                    <div
-                      key={`${photo}-${index}`}
-                      style={{
-                        border:
-                          '1px solid var(--border)',
-                        borderRadius: 10,
-                        overflow:
-                          'hidden',
-                        background:
-                          'var(--bg-page)'
-                      }}
-                    >
-                      <img
-                        src={photoUrl}
-                        alt={`Report photo ${
-                          index + 1
-                        }`}
-                        style={{
-                          width: '100%',
-                          height: 180,
-                          objectFit:
-                            'cover',
-                          display:
-                            'block'
-                        }}
-                        onError={(e) => {
-                          console.error(
-                            'Photo failed:',
-                            photoUrl
-                          );
-
-                          e.currentTarget.style.display =
-                            'none';
-
-                          const parent =
-                            e.currentTarget
-                              .parentElement;
-
-                          if (parent) {
-                            const message =
-                              document.createElement(
-                                'div'
-                              );
-
-                            message.style.height =
-                              '180px';
-
-                            message.style.display =
-                              'flex';
-
-                            message.style.alignItems =
-                              'center';
-
-                            message.style.justifyContent =
-                              'center';
-
-                            message.style.padding =
-                              '15px';
-
-                            message.style.textAlign =
-                              'center';
-
-                            message.style.fontSize =
-                              '12px';
-
-                            message.style.color =
-                              '#777';
-
-                            message.textContent =
-                              'Photo could not be loaded';
-
-                            parent.insertBefore(
-                              message,
-                              parent.firstChild
-                            );
-                          }
-                        }}
-                      />
-
-                      <div
-                        style={{
-                          padding:
-                            '8px 10px',
-                          fontSize: 11,
-                          color:
-                            'var(--text-secondary)',
-                          borderTop:
-                            '1px solid var(--border)'
-                        }}
-                      >
-                        Report photo{' '}
-                        {index + 1}
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: 20,
-                textAlign:
-                  'center',
-                border:
-                  '1px dashed var(--border)',
-                borderRadius: 10,
-                color:
-                  'var(--text-secondary)',
-                fontSize: 13
-              }}
-            >
-              No photos attached to
-              this report.
-            </div>
-          )}
-        </div>
-
-
-        {/* PROGRESS UPDATES */}
-        {report.Updates?.length >
-          0 && (
-          <div
-            style={{
-              marginTop: 22
-            }}
-          >
-            <SectionTitle>
-              PROGRESS UPDATES
-            </SectionTitle>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection:
-                  'column',
-                gap: 10
-              }}
-            >
-              {report.Updates.map(
-                (update, index) => (
+              {photos.map(
+                (
+                  photo,
+                  index
+                ) => (
                   <div
-                    key={index}
-                    style={{
-                      padding: 14,
-                      border:
-                        '1px solid var(--border)',
-                      borderRadius: 8
-                    }}
+                    key={`${photo}-${index}`}
+                    className="admin-report-photo"
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent:
-                          'space-between',
-                        gap: 15,
-                        marginBottom: 6
-                      }}
-                    >
-                      <strong
-                        style={{
-                          fontSize: 13
-                        }}
-                      >
-                        {update.WorkerName ||
-                          'Unknown Worker'}
-                      </strong>
+                    <img
+                      src={
+                        getPhotoUrl(
+                          photo
+                        )
+                      }
+                      alt={`Report photo ${index + 1}`}
+                    />
 
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color:
-                            'var(--text-secondary)'
-                        }}
-                      >
-                        {new Date(
-                          update.CreatedAt
-                        ).toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: 13
-                      }}
-                    >
-                      {update.Note ||
-                        'No progress note provided.'}
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 8
-                      }}
-                    >
-                      <StatusBadge
-                        status={
-                          update.StatusAtUpdate
-                        }
-                      />
+                    <div>
+                      Report photo{' '}
+                      {index + 1}
                     </div>
                   </div>
                 )
               )}
             </div>
-          </div>
+          ) : (
+            <div
+              className="admin-report-empty-box"
+            >
+              No photos attached to
+              this report.
+            </div>
+          )}
+        </section>
+
+
+        {/* UPDATES */}
+
+        {updates.length > 0 && (
+          <section
+            className="admin-report-modal-section"
+          >
+            <SectionTitle>
+              Progress Updates
+            </SectionTitle>
+
+
+            <div
+              className="admin-report-updates"
+            >
+              {updates.map(
+                (
+                  update,
+                  index
+                ) => (
+                  <article
+                    key={index}
+                    className="admin-report-update"
+                  >
+                    <div
+                      className="admin-report-update-heading"
+                    >
+                      <strong>
+                        {update.WorkerName ||
+                          'Unknown Worker'}
+                      </strong>
+
+                      <span>
+                        {update.CreatedAt
+                          ? formatSADateTime(
+                              update.CreatedAt
+                            )
+                          : 'Unknown time'}
+                      </span>
+                    </div>
+
+                    <p>
+                      {update.Note ||
+                        'No progress note provided.'}
+                    </p>
+
+                    <StatusBadge
+                      status={
+                        update.StatusAtUpdate
+                      }
+                    />
+                  </article>
+                )
+              )}
+            </div>
+          </section>
         )}
       </div>
-    </div>
-  );
-}
 
 
-/* ============================================================
-   ASSIGNMENT MODAL
-   ============================================================ */
+      <style>
+        {`
+          .admin-report-modal-backdrop {
+            position: fixed;
 
-function AssignmentModal({
-  report,
-  workers,
-  selectedWorkerId,
-  setSelectedWorkerId,
-  loadingWorkers,
-  assigning,
-  onAssign,
-  onClose
-}) {
-  useEffect(() => {
-    function handleEscape(e) {
-      if (e.key === 'Escape' && !assigning) {
-        onClose();
-      }
-    }
+            inset: 0;
 
-    document.addEventListener(
-      'keydown',
-      handleEscape
-    );
-
-    return () => {
-      document.removeEventListener(
-        'keydown',
-        handleEscape
-      );
-    };
-  }, [onClose, assigning]);
-
-
-  function handleBackdropClick(e) {
-    if (
-      e.target === e.currentTarget &&
-      !assigning
-    ) {
-      onClose();
-    }
-  }
-
-
-  return (
-    <div
-      onClick={handleBackdropClick}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10001,
-
-        background:
-          'rgba(15, 23, 42, 0.35)',
-
-        backdropFilter:
-          'blur(3px)',
-
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-
-        padding: 20
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 500,
-
-          background:
-            'var(--bg-card, white)',
-
-          borderRadius: 14,
-
-          padding: 24,
-
-          boxShadow:
-            '0 20px 60px rgba(0,0,0,0.25)',
-
-          position: 'relative'
-        }}
-      >
-
-        {/* CLOSE */}
-        <button
-          onClick={onClose}
-          disabled={assigning}
-          title="Close"
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-
-            width: 34,
-            height: 34,
-
-            borderRadius: '50%',
-            border:
-              '1px solid var(--border)',
+            z-index: 10001;
 
             background:
-              'var(--bg-page)',
+              rgba(
+                15,
+                23,
+                42,
+                0.45
+              );
 
-            cursor: assigning
-              ? 'not-allowed'
-              : 'pointer',
+            backdrop-filter:
+              blur(3px);
 
-            display: 'flex',
-            alignItems:
-              'center',
-            justifyContent:
-              'center'
-          }}
-        >
-          <X size={17} />
-        </button>
+            display: flex;
 
+            align-items: center;
 
-        {/* HEADER */}
-        <div
-          style={{
-            paddingRight: 45,
-            marginBottom: 22
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              color:
-                'var(--text-secondary)',
-              textTransform:
-                'uppercase',
-              marginBottom: 5
-            }}
-          >
-            Assign Report
-          </div>
+            justify-content:
+              center;
 
-          <div
-            style={{
-              fontSize: 18,
-              fontWeight: 800
-            }}
-          >
-            #{report.ReportCode}
-          </div>
-
-          <div
-            style={{
-              marginTop: 5,
-              fontSize: 14,
-              color:
-                'var(--text-secondary)'
-            }}
-          >
-            {report.Title}
-          </div>
-        </div>
+            padding: 20px;
+          }
 
 
-        {/* WORKER SELECT */}
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 12,
-              fontWeight: 700,
-              marginBottom: 7
-            }}
-          >
-            SELECT WORKER
-          </label>
+          .admin-report-modal {
+            position: relative;
 
-          {loadingWorkers ? (
-            <div
-              style={{
-                padding: 12,
-                border:
-                  '1px solid var(--border)',
-                borderRadius: 8,
-                fontSize: 13,
-                color:
-                  'var(--text-secondary)'
-              }}
-            >
-              Loading workers...
-            </div>
-          ) : (
-            <select
-              value={selectedWorkerId}
-              onChange={(e) =>
-                setSelectedWorkerId(
-                  e.target.value
-                )
-              }
-              disabled={assigning}
-              style={{
-                width: '100%',
-                padding:
-                  '10px 12px',
-                borderRadius: 8,
-                border:
-                  '1px solid var(--border)',
-                background:
-                  'var(--bg-page)',
-                fontSize: 13,
-                outline: 'none'
-              }}
-            >
-              <option value="">
-                Select a worker
-              </option>
+            width:
+              min(
+                850px,
+                100%
+              );
 
-              {workers.map(
-                (worker) => {
-                  const id =
-                    worker.UserId ??
-                    worker.WorkerId ??
-                    worker.Id;
+            max-height: 90vh;
 
-                  const firstName =
-                    worker.FirstName ||
-                    '';
+            overflow-y: auto;
 
-                  const lastName =
-                    worker.LastName ||
-                    '';
+            background: white;
 
-                  const fullName =
-                    worker.WorkerName ||
-                    worker.Name ||
-                    `${firstName} ${lastName}`.trim();
+            border-radius: 14px;
 
-                  return (
-                    <option
-                      key={id}
-                      value={id}
-                    >
-                      {fullName ||
-                        `Worker ${id}`}
-                    </option>
-                  );
-                }
-              )}
-            </select>
-          )}
-        </div>
+            box-shadow:
+              var(--shadow-modal);
+
+            padding: 24px;
+          }
 
 
-        {/* NO WORKERS */}
-        {!loadingWorkers &&
-          workers.length === 0 && (
-            <div
-              style={{
-                marginTop: 10,
-                fontSize: 12,
-                color:
-                  'var(--text-secondary)'
-              }}
-            >
-              No workers are available.
-            </div>
-          )}
+          .admin-report-modal-close {
+            position: absolute;
+
+            top: 16px;
+
+            right: 16px;
+
+            width: 36px;
+
+            height: 36px;
+
+            border-radius: 50%;
+
+            border:
+              1px solid var(--border);
+
+            background:
+              var(--bg-page);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content:
+              center;
+          }
 
 
-        {/* BUTTONS */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent:
-              'flex-end',
-            gap: 10,
-            marginTop: 24
-          }}
-        >
-          <button
-            onClick={onClose}
-            disabled={assigning}
-            style={{
-              padding:
-                '9px 16px',
-              borderRadius: 8,
-              border:
-                '1px solid var(--border)',
-              background:
-                'var(--bg-page)',
-              cursor:
-                assigning
-                  ? 'not-allowed'
-                  : 'pointer',
-              fontSize: 13
-            }}
-          >
-            Cancel
-          </button>
+          .admin-report-modal-header {
+            padding-right: 52px;
 
-          <button
-            className="btn btn-primary"
-            onClick={onAssign}
-            disabled={
-              assigning ||
-              loadingWorkers ||
-              !selectedWorkerId
+            padding-bottom: 18px;
+
+            border-bottom:
+              1px solid var(--border);
+
+            margin-bottom: 20px;
+          }
+
+
+          .admin-report-modal-eyebrow {
+            font-size: 10.5px;
+
+            color:
+              var(--text-secondary);
+
+            text-transform:
+              uppercase;
+
+            font-weight: 800;
+
+            margin-bottom: 4px;
+          }
+
+
+          .admin-report-modal-code {
+            font-size: 19px;
+
+            font-weight: 800;
+          }
+
+
+          .admin-report-modal h2 {
+            margin:
+              6px 0 0;
+
+            font-size: 17px;
+
+            line-height: 1.4;
+
+            overflow-wrap:
+              anywhere;
+          }
+
+
+          .admin-report-detail-grid {
+            display: grid;
+
+            grid-template-columns:
+              repeat(
+                3,
+                minmax(0, 1fr)
+              );
+
+            gap: 18px;
+          }
+
+
+          .admin-report-modal-section {
+            margin-top: 22px;
+          }
+
+
+          .admin-report-description {
+            padding: 14px;
+
+            border-radius: 8px;
+
+            background:
+              var(--bg-page);
+
+            line-height: 1.6;
+
+            font-size: 13px;
+
+            overflow-wrap:
+              anywhere;
+          }
+
+
+          .admin-report-photo-grid {
+            display: grid;
+
+            grid-template-columns:
+              repeat(
+                auto-fill,
+                minmax(180px, 1fr)
+              );
+
+            gap: 12px;
+          }
+
+
+          .admin-report-photo {
+            border:
+              1px solid var(--border);
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            background:
+              var(--bg-page);
+          }
+
+
+          .admin-report-photo img {
+            width: 100%;
+
+            height: 180px;
+
+            object-fit: cover;
+
+            display: block;
+          }
+
+
+          .admin-report-photo > div {
+            padding:
+              8px 10px;
+
+            font-size: 11px;
+
+            color:
+              var(--text-secondary);
+
+            border-top:
+              1px solid var(--border);
+          }
+
+
+          .admin-report-empty-box {
+            padding: 20px;
+
+            text-align: center;
+
+            border:
+              1px dashed var(--border);
+
+            border-radius: 10px;
+
+            color:
+              var(--text-secondary);
+
+            font-size: 13px;
+          }
+
+
+          .admin-report-updates {
+            display: flex;
+
+            flex-direction:
+              column;
+
+            gap: 10px;
+          }
+
+
+          .admin-report-update {
+            padding: 14px;
+
+            border:
+              1px solid var(--border);
+
+            border-radius: 8px;
+          }
+
+
+          .admin-report-update-heading {
+            display: flex;
+
+            justify-content:
+              space-between;
+
+            gap: 12px;
+
+            margin-bottom: 6px;
+          }
+
+
+          .admin-report-update-heading strong {
+            font-size: 13px;
+          }
+
+
+          .admin-report-update-heading span {
+            font-size: 11px;
+
+            color:
+              var(--text-secondary);
+
+            text-align: right;
+          }
+
+
+          .admin-report-update p {
+            margin:
+              0 0 8px;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+          }
+
+
+          @media (max-width: 620px) {
+            .admin-report-modal-backdrop {
+              padding: 8px;
+
+              align-items:
+                flex-end;
             }
-            style={{
+
+
+            .admin-report-modal {
+              width: 100%;
+
+              max-height: 92vh;
+
+              border-radius:
+                16px
+                16px
+                0
+                0;
+
               padding:
-                '9px 16px',
-              fontSize: 13,
-              display: 'flex',
-              alignItems:
-                'center',
-              gap: 7
-            }}
-          >
-            <UserPlus size={14} />
+                18px 16px 22px;
+            }
 
-            {assigning
-              ? 'Assigning...'
-              : 'Assign Report'}
-          </button>
-        </div>
 
-      </div>
+            .admin-report-modal-close {
+              top: 12px;
+
+              right: 12px;
+            }
+
+
+            .admin-report-detail-grid {
+              grid-template-columns:
+                repeat(
+                  2,
+                  minmax(0, 1fr)
+                );
+
+              gap: 14px;
+            }
+
+
+            .admin-report-photo-grid {
+              grid-template-columns:
+                1fr;
+            }
+
+
+            .admin-report-photo img {
+              height:
+                min(
+                  55vw,
+                  240px
+                );
+            }
+
+
+            .admin-report-update-heading {
+              flex-direction:
+                column;
+
+              gap: 3px;
+            }
+
+
+            .admin-report-update-heading span {
+              text-align: left;
+            }
+          }
+
+
+          @media (max-width: 390px) {
+            .admin-report-detail-grid {
+              grid-template-columns:
+                1fr;
+
+              gap: 12px;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }
 
 
-/* ============================================================
+/* =============================================================
    DETAIL ITEM
-   ============================================================ */
+============================================================= */
 
 function DetailItem({
   label,
   value
 }) {
   return (
-    <div>
+    <div
+      style={{
+        minWidth: 0
+      }}
+    >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 10.5,
+
           textTransform:
             'uppercase',
+
           color:
             'var(--text-secondary)',
+
+          fontWeight: 800,
+
           marginBottom: 5
         }}
       >
         {label}
       </div>
 
+
       <div
         style={{
           fontSize: 13,
-          fontWeight: 600
+
+          fontWeight: 600,
+
+          overflowWrap:
+            'anywhere'
         }}
       >
         {value}
@@ -1989,9 +2488,9 @@ function DetailItem({
 }
 
 
-/* ============================================================
+/* =============================================================
    SECTION TITLE
-   ============================================================ */
+============================================================= */
 
 function SectionTitle({
   children
@@ -1999,10 +2498,18 @@ function SectionTitle({
   return (
     <div
       style={{
-        fontSize: 12,
-        fontWeight: 700,
+        fontSize: 11,
+
+        fontWeight: 800,
+
         color:
           'var(--text-secondary)',
+
+        textTransform:
+          'uppercase',
+
+        letterSpacing: 0.35,
+
         marginBottom: 10
       }}
     >
@@ -2012,65 +2519,23 @@ function SectionTitle({
 }
 
 
-/* ============================================================
-   ACTION BUTTON
-   ============================================================ */
+/* =============================================================
+   INITIALS
+============================================================= */
 
-function IconBtn({
-  icon,
-  dark,
-  green,
-  onClick,
-  title
-}) {
+function getInitials(name) {
+  if (!name) {
+    return 'W';
+  }
+
   return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{
-        width: 30,
-        height: 30,
-        borderRadius: '50%',
-        border: 'none',
-
-        background: green
-          ? '#22c55e'
-          : dark
-            ? 'var(--navy-800)'
-            : 'var(--bg-page)',
-
-        color:
-          green || dark
-            ? 'white'
-            : 'var(--text-secondary)',
-
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-
-        cursor: 'pointer'
-      }}
-    >
-      {icon}
-    </button>
-  );
-}
-
-
-/* ============================================================
-   LOADING
-   ============================================================ */
-
-function Loading() {
-  return (
-    <div
-      style={{
-        padding: 40,
-        color:
-          'var(--text-secondary)'
-      }}
-    >
-      Loading dashboard...
-    </div>
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'W'
   );
 }

@@ -1,213 +1,325 @@
-import { RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  RefreshCw
+} from 'lucide-react';
+
+import {
+  useEffect,
+  useState
+} from 'react';
 
 export default function TopBar({
   section,
   page,
-  onRefresh
+  onRefresh,
+  refreshing: refreshingProp
 }) {
-  const [time, setTime] = useState(new Date());
-  const [refreshing, setRefreshing] = useState(false);
+  const [time, setTime] = useState(
+    new Date()
+  );
+
+  const [
+    internalRefreshing,
+    setInternalRefreshing
+  ] = useState(false);
+
+  const refreshing =
+    typeof refreshingProp === 'boolean'
+      ? refreshingProp
+      : internalRefreshing;
+
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date());
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
 
-  const handleRefresh = async () => {
+
+  async function handleRefresh() {
     if (!onRefresh || refreshing) {
       return;
     }
 
-    setRefreshing(true);
+    if (
+      typeof refreshingProp !==
+      'boolean'
+    ) {
+      setInternalRefreshing(true);
+    }
 
     try {
       await onRefresh();
     } finally {
-      setTimeout(() => {
-        setRefreshing(false);
-      }, 700);
+      if (
+        typeof refreshingProp !==
+        'boolean'
+      ) {
+        setTimeout(() => {
+          setInternalRefreshing(false);
+        }, 500);
+      }
     }
-  };
+  }
+
 
   return (
-    <>
+    <div
+      className="portal-topbar"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+
+        padding: '16px 28px',
+
+        background: 'white',
+
+        borderBottom:
+          '1px solid var(--border)',
+
+        position: 'sticky',
+        top: 0,
+
+        zIndex: 1000,
+
+        width: '100%'
+      }}
+    >
+      {/* ========================================================
+          BREADCRUMB
+      ======================================================== */}
+
       <div
-        className="top-bar"
+        className="portal-topbar-breadcrumb"
         style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "16px 28px",
-          background: "white",
-          borderBottom: "1px solid var(--border)",
+          minWidth: 0,
 
-          position: "sticky",
-          top: 0,
-          zIndex: 1000,
+          fontSize: 14,
 
-          width: "100%",
-          boxSizing: "border-box"
+          color:
+            'var(--text-secondary)',
+
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}
       >
-        {/* Breadcrumb */}
-        <div
-          style={{
-            fontSize: 14,
-            color: "var(--text-secondary)"
-          }}
-        >
+        <span>
           {section}
+        </span>
 
-          <span
-            style={{
-              margin: "0 6px",
-              color: "var(--text-muted)"
-            }}
-          >
-            /
-          </span>
-
-          <span
-            style={{
-              color: "var(--text-primary)",
-              fontWeight: 600
-            }}
-          >
-            {page}
-          </span>
-        </div>
-
-        {/* Actions */}
-        <div
+        <span
           style={{
-            marginLeft: "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 14
+            margin: '0 6px',
+            color:
+              'var(--text-muted)'
           }}
         >
-          {/* Current Date + Time */}
-          <div
-            style={{
-              fontSize: 13,
-              color: "var(--text-secondary)",
-              textAlign: "right"
-            }}
-          >
-            <div>
-              {time.toLocaleDateString("en-ZA", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-                year: "numeric"
-              })}
-            </div>
+          /
+        </span>
 
-            <div
-              style={{
-                fontWeight: 600
-              }}
-            >
-              {time.toLocaleTimeString("en-ZA", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-              })}
-            </div>
+        <span
+          style={{
+            color:
+              'var(--text-primary)',
+
+            fontWeight: 700
+          }}
+        >
+          {page}
+        </span>
+      </div>
+
+
+      {/* ========================================================
+          ACTIONS
+      ======================================================== */}
+
+      <div
+        className="portal-topbar-actions"
+        style={{
+          marginLeft: 'auto',
+
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+
+          flexShrink: 0
+        }}
+      >
+        {/* CLOCK */}
+
+        <div
+          className="portal-topbar-clock"
+          style={{
+            fontSize: 13,
+
+            color:
+              'var(--text-secondary)',
+
+            textAlign: 'right',
+
+            lineHeight: 1.35
+          }}
+        >
+          <div
+            className="portal-topbar-date"
+          >
+            {time.toLocaleDateString(
+              'en-ZA',
+              {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              }
+            )}
           </div>
 
-          {/* Refresh Button */}
-          {onRefresh && (
-            <button
-              className="btn btn-primary"
-              style={{
-                padding: "8px 14px",
-                display: "flex",
-                alignItems: "center",
-                gap: 7
-              }}
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw
-                size={14}
-                style={{
-                  animation: refreshing
-                    ? "spin 1s linear infinite"
-                    : "none"
-                }}
-              />
-
-              {refreshing
-                ? "Refreshing System..."
-                : "Refresh"}
-            </button>
-          )}
+          <div
+            style={{
+              fontWeight: 700
+            }}
+          >
+            {time.toLocaleTimeString(
+              'en-ZA',
+              {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              }
+            )}
+          </div>
         </div>
 
-        {/* =====================================================
-            EXISTING REFRESH ANIMATION + MOBILE NAVIGATION
-        ===================================================== */}
 
-        <style>
-          {`
-            @keyframes spin {
-              from {
-                transform: rotate(0deg);
-              }
+        {/* REFRESH */}
 
-              to {
-                transform: rotate(360deg);
-              }
+        {onRefresh && (
+          <button
+            type="button"
+            className="btn btn-primary portal-topbar-refresh"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label={
+              refreshing
+                ? 'Refreshing'
+                : 'Refresh'
             }
+            style={{
+              padding: '8px 14px',
 
-            /* =================================================
-               MOBILE NAVIGATION LINKS
-               ================================================= */
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7
+            }}
+          >
+            <RefreshCw
+              size={14}
+              style={{
+                animation:
+                  refreshing
+                    ? 'portalSpin 1s linear infinite'
+                    : 'none',
 
-            @media (max-width: 767px) {
-              .mobile-menu a,
-              .mobile-nav a,
-              .hamburger-menu a,
-              .nav-menu a,
-              .mobile-navigation a {
-                color: var(--gold-500) !important;
-                text-decoration: none !important;
-              }
+                flexShrink: 0
+              }}
+            />
 
-              .mobile-menu a:visited,
-              .mobile-nav a:visited,
-              .hamburger-menu a:visited,
-              .nav-menu a:visited,
-              .mobile-navigation a:visited {
-                color: var(--gold-500) !important;
-                text-decoration: none !important;
-              }
-
-              .mobile-menu a:hover,
-              .mobile-nav a:hover,
-              .hamburger-menu a:hover,
-              .nav-menu a:hover,
-              .mobile-navigation a:hover {
-                color: var(--gold-500) !important;
-                text-decoration: none !important;
-              }
-
-              .mobile-menu a:active,
-              .mobile-nav a:active,
-              .hamburger-menu a:active,
-              .nav-menu a:active,
-              .mobile-navigation a:active {
-                color: var(--gold-500) !important;
-                text-decoration: none !important;
-              }
-            }
-          `}
-        </style>
+            <span
+              className="portal-topbar-refresh-label"
+            >
+              {refreshing
+                ? 'Refreshing...'
+                : 'Refresh'}
+            </span>
+          </button>
+        )}
       </div>
-    </>
+
+
+      <style>
+        {`
+          @keyframes portalSpin {
+            from {
+              transform: rotate(0deg);
+            }
+
+            to {
+              transform: rotate(360deg);
+            }
+          }
+
+          /*
+           * Mobile Admin / Worker layout has
+           * a 58px portal navigation header.
+           */
+          @media (max-width: 900px) {
+            .portal-topbar {
+              top: 58px !important;
+
+              padding:
+                12px 16px !important;
+            }
+          }
+
+          @media (max-width: 620px) {
+            .portal-topbar {
+              gap: 8px !important;
+            }
+
+            .portal-topbar-breadcrumb {
+              font-size:
+                12.5px !important;
+            }
+
+            .portal-topbar-date {
+              display: none;
+            }
+
+            .portal-topbar-clock {
+              font-size:
+                12px !important;
+            }
+
+            .portal-topbar-refresh {
+              width:
+                36px !important;
+
+              height:
+                36px !important;
+
+              padding:
+                0 !important;
+
+              border-radius:
+                9px !important;
+            }
+
+            .portal-topbar-refresh-label {
+              display: none;
+            }
+          }
+
+          @media (max-width: 390px) {
+            .portal-topbar {
+              padding-left:
+                12px !important;
+
+              padding-right:
+                12px !important;
+            }
+
+            .portal-topbar-clock {
+              display: none;
+            }
+          }
+        `}
+      </style>
+    </div>
   );
 }

@@ -291,9 +291,9 @@ export default function Analytics() {
 
                 id:
 
-                  row\.CategoryID ??
+                  row.CategoryID ??
 
-                  row\.CategoryId ??
+                  row.CategoryId ??
 
                   '',
 
@@ -301,11 +301,11 @@ export default function Analytics() {
 
                 name:
 
-                  row\.Name ??
+                  row.Name ??
 
-                  row\.DisplayName ??
+                  row.DisplayName ??
 
-                  row\.CategoryName ??
+                  row.CategoryName ??
 
                   'Unnamed category'
 
@@ -339,9 +339,9 @@ export default function Analytics() {
 
                 id:
 
-                  row\.LocationID ??
+                  row.LocationID ??
 
-                  row\.LocationId ??
+                  row.LocationId ??
 
                   '',
 
@@ -349,11 +349,11 @@ export default function Analytics() {
 
                 name:
 
-                  row\.Name ??
+                  row.Name ??
 
-                  row\.LocationName ??
+                  row.LocationName ??
 
-                  row\.AddressDescription ??
+                  row.AddressDescription ??
 
                   'Unnamed location'
 
@@ -451,9 +451,8 @@ export default function Analytics() {
 
 
           /*
-           * Keep everything else on Analytics exactly as-is.
-           * Only Workers and Avg Response are replaced with
-           * values from existing real backend endpoints.
+           * Keep the existing Analytics page exactly as-is.
+           * Only these two KPI values are replaced with live data.
            */
           const [
             workersResult,
@@ -477,7 +476,8 @@ export default function Analytics() {
 
 
           /*
-           * Match Manage Workers exactly.
+           * Manage Workers displays workers.length, so use the
+           * exact same endpoint/count here.
            */
           if (
             workersResult.status ===
@@ -492,7 +492,10 @@ export default function Analytics() {
 
 
           /*
-           * Use the backend's real average response calculation.
+           * Prefer the backend's real average response time.
+           *
+           * If the restored backend does not expose /admin/analytics,
+           * keep the existing analytics value instead of showing a dash.
            */
           if (
             timingResult.status ===
@@ -932,7 +935,7 @@ export default function Analytics() {
 
                     categoryTotal
 
-                  ) \* 100
+                  ) * 100
 
                 : 0,
 
@@ -994,7 +997,7 @@ export default function Analytics() {
 
         Math.round(
 
-          total \*
+          total *
 
           (rate / 100)
 
@@ -1064,11 +1067,11 @@ export default function Analytics() {
 
     return (
 
-      \<PageTransition>
+      <PageTransition>
 
-        \<div className="analytics-page">
+        <div className="analytics-page">
 
-          \<TopBar
+          <TopBar
 
             section="Admin"
 
@@ -1078,9 +1081,9 @@ export default function Analytics() {
 
 
 
-          \<main className="analytics-content">
+          <main className="analytics-content">
 
-            \<AnalyticsHeader
+            <AnalyticsHeader
 
               draftFilters={draftFilters}
 
@@ -1148,13 +1151,13 @@ export default function Analytics() {
 
 
 
-            \<AnalyticsSkeleton />
+            <AnalyticsSkeleton />
 
-          \</main>
+          </main>
 
-        \</div>
+        </div>
 
-      \</PageTransition>
+      </PageTransition>
 
     );
 
@@ -1174,11 +1177,11 @@ export default function Analytics() {
 
   return (
 
-    \<PageTransition>
+    <PageTransition>
 
-      \<div className="analytics-page">
+      <div className="analytics-page">
 
-        \<TopBar
+        <TopBar
 
           section="Admin"
 
@@ -1192,11 +1195,11 @@ export default function Analytics() {
 
 
 
-        \<main className="analytics-content">
+        <main className="analytics-content">
 
           {error && (
 
-            \<ErrorBanner
+            <ErrorBanner
 
               message={error}
 
@@ -1216,7 +1219,7 @@ export default function Analytics() {
 
 
 
-          \<AnalyticsHeader
+          <AnalyticsHeader
 
             draftFilters={
 
@@ -1314,7 +1317,7 @@ export default function Analytics() {
 
 
 
-          \<div
+          <div
 
             className={
 
@@ -1336,7 +1339,7 @@ export default function Analytics() {
 
             {globalEmpty ? (
 
-              \<GlobalEmptyState
+              <GlobalEmptyState
 
                 onReset={
 
@@ -1350,7 +1353,7 @@ export default function Analytics() {
 
               <>
 
-                \<KpiGrid
+                <KpiGrid
 
                   data={data}
 
@@ -1360,7 +1363,7 @@ export default function Analytics() {
 
 
 
-                {/\* =================================================
+                {/* =================================================
 
                     MAIN CHART GRID
 
@@ -1370,13 +1373,13 @@ export default function Analytics() {
 
                     structure that created the large vertical gap.
 
-                ================================================= \*/}
+                ================================================= */}
 
 
 
-                \<section className="analytics-main-grid">
+                <section className="analytics-main-grid">
 
-                  \<ChartCard
+                  <ChartCard
 
                     className="analytics-category-card"
 
@@ -1390,7 +1393,7 @@ export default function Analytics() {
 
                       <>
 
-                        \<CategoryBarChart
+                        <CategoryBarChart
 
                           data={
 
@@ -1402,7 +1405,7 @@ export default function Analytics() {
 
 
 
-                        \<TopCategorySummary
+                        <TopCategorySummary
 
                           data={
 
@@ -1412,11 +1415,11 @@ export default function Analytics() {
 
                         />
 
-                      \</>
+                      </>
 
                     ) : (
 
-                      \<ChartEmptyState
+                      <ChartEmptyState
 
                         title="No category data available for the selected filters."
 
@@ -1432,13 +1435,13 @@ export default function Analytics() {
 
                     )}
 
-                  \</ChartCard>
+                  </ChartCard>
 
 
 
 
 
-                  \<ChartCard
+                  <ChartCard
 
                     className="analytics-share-card"
 
@@ -1452,7 +1455,7 @@ export default function Analytics() {
 
                     {categoryBreakdown.length ? (
 
-                      \<CategoryDonut
+                      <CategoryDonut
 
                         data={
 
@@ -1472,7 +1475,7 @@ export default function Analytics() {
 
                     ) : (
 
-                      \<ChartEmptyState
+                      <ChartEmptyState
 
                         compact
 
@@ -1488,13 +1491,13 @@ export default function Analytics() {
 
                     )}
 
-                  \</ChartCard>
+                  </ChartCard>
 
 
 
 
 
-                  \<ResolutionPerformance
+                  <ResolutionPerformance
 
                     rate={
 
@@ -1522,13 +1525,13 @@ export default function Analytics() {
 
                   />
 
-                \</section>
+                </section>
 
 
 
 
 
-                \<ChartCard
+                <ChartCard
 
                   className="analytics-location-card"
 
@@ -1540,7 +1543,7 @@ export default function Analytics() {
 
                   {byLocation.length ? (
 
-                    \<LocationBarChart
+                    <LocationBarChart
 
                       data={
 
@@ -1552,7 +1555,7 @@ export default function Analytics() {
 
                   ) : (
 
-                    \<ChartEmptyState
+                    <ChartEmptyState
 
                       title="No location data available for the selected filters."
 
@@ -1568,13 +1571,13 @@ export default function Analytics() {
 
                   )}
 
-                \</ChartCard>
+                </ChartCard>
 
 
 
 
 
-                \<CategoryBreakdown
+                <CategoryBreakdown
 
                   data={
 
@@ -1584,11 +1587,11 @@ export default function Analytics() {
 
                 />
 
-              \</>
+              </>
 
             )}
 
-          \</div>
+          </div>
 
 
 
@@ -1596,7 +1599,7 @@ export default function Analytics() {
 
           {refreshing && (
 
-            \<div
+            <div
 
               className="analytics-refresh-indicator"
 
@@ -1608,15 +1611,15 @@ export default function Analytics() {
 
               Refreshing analytics…
 
-            \</div>
+            </div>
 
           )}
 
-        \</main>
+        </main>
 
-      \</div>
+      </div>
 
-    \</PageTransition>
+    </PageTransition>
 
   );
 
@@ -1664,21 +1667,21 @@ function AnalyticsHeader({
 
   return (
 
-    \<section className="analytics-header">
+    <section className="analytics-header">
 
-      \<div className="analytics-title-row">
+      <div className="analytics-title-row">
 
-        \<div>
+        <div>
 
-          \<h1>
+          <h1>
 
             Analytics Overview
 
-          \</h1>
+          </h1>
 
 
 
-          \<p>
+          <p>
 
             Service delivery performance,
 
@@ -1686,21 +1689,21 @@ function AnalyticsHeader({
 
             issue distribution.
 
-          \</p>
+          </p>
 
-        \</div>
-
-
+        </div>
 
 
 
-        \<div className="analytics-filter-summary">
-
-          \<span className="analytics-filter-summary-dot" />
 
 
+        <div className="analytics-filter-summary">
 
-          \<span>
+          <span className="analytics-filter-summary-dot" />
+
+
+
+          <span>
 
             {buildFilterSummary(
 
@@ -1708,11 +1711,11 @@ function AnalyticsHeader({
 
             )}
 
-          \</span>
+          </span>
 
 
 
-          \<button
+          <button
 
             type="button"
 
@@ -1726,33 +1729,33 @@ function AnalyticsHeader({
 
           >
 
-            \<X size={14} />
+            <X size={14} />
 
-          \</button>
+          </button>
 
-        \</div>
+        </div>
 
-      \</div>
-
-
+      </div>
 
 
 
-      \<div className="analytics-filter-card">
 
-        \<div className="analytics-filter-grid">
 
-          \<label className="analytics-filter-field">
+      <div className="analytics-filter-card">
 
-            \<span>
+        <div className="analytics-filter-grid">
+
+          <label className="analytics-filter-field">
+
+            <span>
 
               Date Range
 
-            \</span>
+            </span>
 
 
 
-            \<select
+            <select
 
               value={
 
@@ -1774,71 +1777,71 @@ function AnalyticsHeader({
 
             >
 
-              \<option value="all">
+              <option value="all">
 
                 All Time
 
-              \</option>
+              </option>
 
 
 
-              \<option value="today">
+              <option value="today">
 
                 Today
 
-              \</option>
+              </option>
 
 
 
-              \<option value="7d">
+              <option value="7d">
 
                 Last 7 Days
 
-              \</option>
+              </option>
 
 
 
-              \<option value="30d">
+              <option value="30d">
 
                 Last 30 Days
 
-              \</option>
+              </option>
 
 
 
-              \<option value="90d">
+              <option value="90d">
 
                 Last 90 Days
 
-              \</option>
+              </option>
 
 
 
-              \<option value="custom">
+              <option value="custom">
 
                 Custom Range
 
-              \</option>
+              </option>
 
-            \</select>
+            </select>
 
-          \</label>
-
-
+          </label>
 
 
 
-          \<label className="analytics-filter-field">
 
-            \<span>
+
+          <label className="analytics-filter-field">
+
+            <span>
 
               Category
 
-            \</span>
+            </span>
 
 
 
-            \<select
+            <select
 
               value={
 
@@ -1868,11 +1871,11 @@ function AnalyticsHeader({
 
             >
 
-              \<option value="">
+              <option value="">
 
                 All Categories
 
-              \</option>
+              </option>
 
 
 
@@ -1880,11 +1883,11 @@ function AnalyticsHeader({
 
                 (category) => (
 
-                  \<option
+                  <option
 
                     key={
 
-                      \`${category.id}-${category.name}\`
+                      `${category.id}-${category.name}`
 
                     }
 
@@ -1902,31 +1905,31 @@ function AnalyticsHeader({
 
                     {category.name}
 
-                  \</option>
+                  </option>
 
                 )
 
               )}
 
-            \</select>
+            </select>
 
-          \</label>
-
-
+          </label>
 
 
 
-          \<label className="analytics-filter-field">
 
-            \<span>
+
+          <label className="analytics-filter-field">
+
+            <span>
 
               Location / Ward
 
-            \</span>
+            </span>
 
 
 
-            \<select
+            <select
 
               value={
 
@@ -1956,11 +1959,11 @@ function AnalyticsHeader({
 
             >
 
-              \<option value="">
+              <option value="">
 
                 All Locations
 
-              \</option>
+              </option>
 
 
 
@@ -1968,11 +1971,11 @@ function AnalyticsHeader({
 
                 (location) => (
 
-                  \<option
+                  <option
 
                     key={
 
-                      \`${location.id}-${location.name}\`
+                      `${location.id}-${location.name}`
 
                     }
 
@@ -1990,23 +1993,23 @@ function AnalyticsHeader({
 
                     {location.name}
 
-                  \</option>
+                  </option>
 
                 )
 
               )}
 
-            \</select>
+            </select>
 
-          \</label>
-
-
+          </label>
 
 
 
-          \<div className="analytics-filter-actions">
 
-            \<button
+
+          <div className="analytics-filter-actions">
+
+            <button
 
               type="button"
 
@@ -2018,19 +2021,19 @@ function AnalyticsHeader({
 
             >
 
-              \<Filter size={15} />
+              <Filter size={15} />
 
 
 
               Apply
 
-            \</button>
+            </button>
 
 
 
 
 
-            \<button
+            <button
 
               type="button"
 
@@ -2046,17 +2049,17 @@ function AnalyticsHeader({
 
             >
 
-              \<RotateCcw
+              <RotateCcw
 
                 size={15}
 
               />
 
-            \</button>
+            </button>
 
-          \</div>
+          </div>
 
-        \</div>
+        </div>
 
 
 
@@ -2066,19 +2069,19 @@ function AnalyticsHeader({
 
           'custom' && (
 
-          \<div className="analytics-custom-range">
+          <div className="analytics-custom-range">
 
-            \<label className="analytics-filter-field">
+            <label className="analytics-filter-field">
 
-              \<span>
+              <span>
 
                 From
 
-              \</span>
+              </span>
 
 
 
-              \<input
+              <input
 
                 type="date"
 
@@ -2110,23 +2113,23 @@ function AnalyticsHeader({
 
               />
 
-            \</label>
+            </label>
 
 
 
 
 
-            \<label className="analytics-filter-field">
+            <label className="analytics-filter-field">
 
-              \<span>
+              <span>
 
                 To
 
-              \</span>
+              </span>
 
 
 
-              \<input
+              <input
 
                 type="date"
 
@@ -2158,15 +2161,15 @@ function AnalyticsHeader({
 
               />
 
-            \</label>
+            </label>
 
-          \</div>
+          </div>
 
         )}
 
-      \</div>
+      </div>
 
-    \</section>
+    </section>
 
   );
 
@@ -2202,17 +2205,17 @@ function KpiGrid({
 
   return (
 
-    \<section className="analytics-kpi-grid">
+    <section className="analytics-kpi-grid">
 
-      \<KpiCard
+      <KpiCard
 
         label="Resolution Rate"
 
-        value={\`${resolution}%\`}
+        value={`${resolution}%`}
 
         icon={
 
-          \<CheckCircle2
+          <CheckCircle2
 
             size={17}
 
@@ -2224,29 +2227,29 @@ function KpiGrid({
 
       >
 
-        \<div className="analytics-kpi-progress">
+        <div className="analytics-kpi-progress">
 
-          \<span
+          <span
 
             style={{
 
               width:
 
-                \`${resolution}%\`
+                `${resolution}%`
 
             }}
 
           />
 
-        \</div>
+        </div>
 
-      \</KpiCard>
-
-
+      </KpiCard>
 
 
 
-      \<KpiCard
+
+
+      <KpiCard
 
         label="Avg Response"
 
@@ -2266,7 +2269,7 @@ function KpiGrid({
 
         icon={
 
-          \<Clock3 size={17} />
+          <Clock3 size={17} />
 
         }
 
@@ -2276,7 +2279,7 @@ function KpiGrid({
 
 
 
-      \<KpiCard
+      <KpiCard
 
         label="Avg Resolution"
 
@@ -2296,7 +2299,7 @@ function KpiGrid({
 
         icon={
 
-          \<CalendarDays
+          <CalendarDays
 
             size={17}
 
@@ -2312,7 +2315,7 @@ function KpiGrid({
 
 
 
-      \<KpiCard
+      <KpiCard
 
         label="Workers"
 
@@ -2330,7 +2333,7 @@ function KpiGrid({
 
         icon={
 
-          \<Users size={17} />
+          <Users size={17} />
 
         }
 
@@ -2340,7 +2343,7 @@ function KpiGrid({
 
 
 
-      \<KpiCard
+      <KpiCard
 
         label="Total Issues"
 
@@ -2358,7 +2361,7 @@ function KpiGrid({
 
         icon={
 
-          \<ClipboardList
+          <ClipboardList
 
             size={17}
 
@@ -2370,7 +2373,7 @@ function KpiGrid({
 
       />
 
-    \</section>
+    </section>
 
   );
 
@@ -2398,43 +2401,43 @@ function KpiCard({
 
   return (
 
-    \<article
+    <article
 
       className={
 
-        \`analytics-kpi-card analytics-kpi-card--${tone}\`
+        `analytics-kpi-card analytics-kpi-card--${tone}`
 
       }
 
     >
 
-      \<div className="analytics-kpi-top">
+      <div className="analytics-kpi-top">
 
-        \<span className="analytics-kpi-label">
+        <span className="analytics-kpi-label">
 
           {label}
 
-        \</span>
+        </span>
 
 
 
-        \<span className="analytics-kpi-icon">
+        <span className="analytics-kpi-icon">
 
           {icon}
 
-        \</span>
+        </span>
 
-      \</div>
-
-
+      </div>
 
 
 
-      \<div className="analytics-kpi-value">
+
+
+      <div className="analytics-kpi-value">
 
         {value}
 
-      \</div>
+      </div>
 
 
 
@@ -2442,11 +2445,11 @@ function KpiCard({
 
       {description && (
 
-        \<div className="analytics-kpi-description">
+        <div className="analytics-kpi-description">
 
           {description}
 
-        \</div>
+        </div>
 
       )}
 
@@ -2456,7 +2459,7 @@ function KpiCard({
 
       {children}
 
-    \</article>
+    </article>
 
   );
 
@@ -2490,59 +2493,59 @@ function ChartCard({
 
   return (
 
-    \<section
+    <section
 
       className={
 
-        \`analytics-chart-card ${className}\`
+        `analytics-chart-card ${className}`
 
       }
 
     >
 
-      \<div className="analytics-chart-header">
+      <div className="analytics-chart-header">
 
-        \<div>
+        <div>
 
-          \<h2>
+          <h2>
 
             {title}
 
-          \</h2>
+          </h2>
 
 
 
           {subtitle && (
 
-            \<p>
+            <p>
 
               {subtitle}
 
-            \</p>
+            </p>
 
           )}
 
-        \</div>
+        </div>
 
 
 
         {badge && (
 
-          \<span className="analytics-chart-badge">
+          <span className="analytics-chart-badge">
 
             {badge}
 
-          \</span>
+          </span>
 
         )}
 
-      \</div>
+      </div>
 
 
 
       {children}
 
-    \</section>
+    </section>
 
   );
 
@@ -2576,9 +2579,9 @@ function CategoryBarChart({
 
     return (
 
-      \<div className="analytics-chart-body analytics-chart-body--scroll">
+      <div className="analytics-chart-body analytics-chart-body--scroll">
 
-        \<div
+        <div
 
           style={{
 
@@ -2588,7 +2591,7 @@ function CategoryBarChart({
 
                 260,
 
-                data.length \* 42
+                data.length * 42
 
               )
 
@@ -2596,7 +2599,7 @@ function CategoryBarChart({
 
         >
 
-          \<ResponsiveContainer
+          <ResponsiveContainer
 
             width="100%"
 
@@ -2604,7 +2607,7 @@ function CategoryBarChart({
 
           >
 
-            \<BarChart
+            <BarChart
 
               data={data}
 
@@ -2624,7 +2627,7 @@ function CategoryBarChart({
 
             >
 
-              \<CartesianGrid
+              <CartesianGrid
 
                 strokeDasharray="3 3"
 
@@ -2636,7 +2639,7 @@ function CategoryBarChart({
 
 
 
-              \<XAxis
+              <XAxis
 
                 type="number"
 
@@ -2660,7 +2663,7 @@ function CategoryBarChart({
 
 
 
-              \<YAxis
+              <YAxis
 
                 type="category"
 
@@ -2686,11 +2689,11 @@ function CategoryBarChart({
 
 
 
-              \<Tooltip
+              <Tooltip
 
                 content={
 
-                  \<AnalyticsTooltip
+                  <AnalyticsTooltip
 
                     labelKey="CategoryName"
 
@@ -2702,7 +2705,7 @@ function CategoryBarChart({
 
 
 
-              \<Bar
+              <Bar
 
                 dataKey="IssueCount"
 
@@ -2724,13 +2727,13 @@ function CategoryBarChart({
 
               />
 
-            \</BarChart>
+            </BarChart>
 
-          \</ResponsiveContainer>
+          </ResponsiveContainer>
 
-        \</div>
+        </div>
 
-      \</div>
+      </div>
 
     );
 
@@ -2742,9 +2745,9 @@ function CategoryBarChart({
 
   return (
 
-    \<div className="analytics-category-chart">
+    <div className="analytics-category-chart">
 
-      \<ResponsiveContainer
+      <ResponsiveContainer
 
         width="100%"
 
@@ -2752,7 +2755,7 @@ function CategoryBarChart({
 
       >
 
-        \<BarChart
+        <BarChart
 
           data={data}
 
@@ -2770,7 +2773,7 @@ function CategoryBarChart({
 
         >
 
-          \<CartesianGrid
+          <CartesianGrid
 
             strokeDasharray="3 3"
 
@@ -2782,7 +2785,7 @@ function CategoryBarChart({
 
 
 
-          \<XAxis
+          <XAxis
 
             dataKey="CategoryName"
 
@@ -2812,7 +2815,7 @@ function CategoryBarChart({
 
 
 
-          \<YAxis
+          <YAxis
 
             allowDecimals={false}
 
@@ -2834,11 +2837,11 @@ function CategoryBarChart({
 
 
 
-          \<Tooltip
+          <Tooltip
 
             content={
 
-              \<AnalyticsTooltip
+              <AnalyticsTooltip
 
                 labelKey="CategoryName"
 
@@ -2850,7 +2853,7 @@ function CategoryBarChart({
 
 
 
-          \<Bar
+          <Bar
 
             dataKey="IssueCount"
 
@@ -2874,11 +2877,11 @@ function CategoryBarChart({
 
           />
 
-        \</BarChart>
+        </BarChart>
 
-      \</ResponsiveContainer>
+      </ResponsiveContainer>
 
-    \</div>
+    </div>
 
   );
 
@@ -2904,31 +2907,31 @@ function TopCategorySummary({
 
   return (
 
-    \<div className="analytics-top-categories">
+    <div className="analytics-top-categories">
 
-      \<div className="analytics-top-categories-heading">
+      <div className="analytics-top-categories-heading">
 
-        \<span>
+        <span>
 
           Top Issue Drivers
 
-        \</span>
+        </span>
 
 
 
-        \<span>
+        <span>
 
           Count · Share
 
-        \</span>
+        </span>
 
-      \</div>
-
-
+      </div>
 
 
 
-      \<div className="analytics-top-categories-grid">
+
+
+      <div className="analytics-top-categories-grid">
 
         {data
 
@@ -2936,7 +2939,7 @@ function TopCategorySummary({
 
           .map((item) => (
 
-            \<div
+            <div
 
               key={
 
@@ -2948,7 +2951,7 @@ function TopCategorySummary({
 
             >
 
-              \<span
+              <span
 
                 title={
 
@@ -2960,11 +2963,11 @@ function TopCategorySummary({
 
                 {item.CategoryName}
 
-              \</span>
+              </span>
 
 
 
-              \<strong>
+              <strong>
 
                 {formatCount(
 
@@ -2974,7 +2977,7 @@ function TopCategorySummary({
 
 
 
-                \<em>
+                <em>
 
                   {formatPercent(
 
@@ -2982,17 +2985,17 @@ function TopCategorySummary({
 
                   )}
 
-                \</em>
+                </em>
 
-              \</strong>
+              </strong>
 
-            \</div>
+            </div>
 
           ))}
 
-      \</div>
+      </div>
 
-    \</div>
+    </div>
 
   );
 
@@ -3026,11 +3029,11 @@ function CategoryDonut({
 
   return (
 
-    \<div className="analytics-donut-layout">
+    <div className="analytics-donut-layout">
 
-      \<div className="analytics-donut-visual">
+      <div className="analytics-donut-visual">
 
-        \<ResponsiveContainer
+        <ResponsiveContainer
 
           width="100%"
 
@@ -3038,9 +3041,9 @@ function CategoryDonut({
 
         >
 
-          \<PieChart>
+          <PieChart>
 
-            \<Pie
+            <Pie
 
               data={data}
 
@@ -3068,7 +3071,7 @@ function CategoryDonut({
 
                 (item) => (
 
-                  \<Cell
+                  <Cell
 
                     key={
 
@@ -3088,15 +3091,15 @@ function CategoryDonut({
 
               )}
 
-            \</Pie>
+            </Pie>
 
 
 
-            \<Tooltip
+            <Tooltip
 
               content={
 
-                \<AnalyticsTooltip
+                <AnalyticsTooltip
 
                   labelKey="CategoryName"
 
@@ -3106,25 +3109,25 @@ function CategoryDonut({
 
             />
 
-          \</PieChart>
+          </PieChart>
 
-        \</ResponsiveContainer>
-
-
+        </ResponsiveContainer>
 
 
 
-        \<div className="analytics-donut-center">
 
-          \<span>
+
+        <div className="analytics-donut-center">
+
+          <span>
 
             Total
 
-          \</span>
+          </span>
 
 
 
-          \<strong>
+          <strong>
 
             {formatCount(
 
@@ -3132,31 +3135,31 @@ function CategoryDonut({
 
             )}
 
-          \</strong>
+          </strong>
 
 
 
-          \<small>
+          <small>
 
             Issues
 
-          \</small>
+          </small>
 
-        \</div>
+        </div>
 
-      \</div>
-
-
+      </div>
 
 
 
-      \<div className="analytics-donut-legend">
+
+
+      <div className="analytics-donut-legend">
 
         {data.map(
 
           (item) => (
 
-            \<div
+            <div
 
               key={
 
@@ -3168,9 +3171,9 @@ function CategoryDonut({
 
             >
 
-              \<span className="analytics-legend-label">
+              <span className="analytics-legend-label">
 
-                \<i
+                <i
 
                   style={{
 
@@ -3184,7 +3187,7 @@ function CategoryDonut({
 
 
 
-                \<span
+                <span
 
                   title={
 
@@ -3196,13 +3199,13 @@ function CategoryDonut({
 
                   {item.CategoryName}
 
-                \</span>
+                </span>
 
-              \</span>
+              </span>
 
 
 
-              \<strong>
+              <strong>
 
                 {formatCount(
 
@@ -3212,7 +3215,7 @@ function CategoryDonut({
 
 
 
-                \<small>
+                <small>
 
                   {formatPercent(
 
@@ -3220,17 +3223,17 @@ function CategoryDonut({
 
                   )}
 
-                \</small>
+                </small>
 
-              \</strong>
+              </strong>
 
-            \</div>
+            </div>
 
           )
 
         )}
 
-      \</div>
+      </div>
 
 
 
@@ -3238,25 +3241,25 @@ function CategoryDonut({
 
       {primary && (
 
-        \<div className="analytics-primary-driver">
+        <div className="analytics-primary-driver">
 
-          \<span>
+          <span>
 
             Primary Driver
 
-          \</span>
+          </span>
 
 
 
-          \<strong>
+          <strong>
 
             {primary.CategoryName}
 
-          \</strong>
+          </strong>
 
 
 
-          \<em>
+          <em>
 
             {formatPercent(
 
@@ -3264,13 +3267,13 @@ function CategoryDonut({
 
             )}
 
-          \</em>
+          </em>
 
-        \</div>
+        </div>
 
       )}
 
-    \</div>
+    </div>
 
   );
 
@@ -3308,47 +3311,47 @@ function ResolutionPerformance({
 
   return (
 
-    \<section className="analytics-resolution-card">
+    <section className="analytics-resolution-card">
 
-      \<div className="analytics-resolution-header">
+      <div className="analytics-resolution-header">
 
-        \<div>
+        <div>
 
-          \<h3>
+          <h3>
 
             Resolution Performance
 
-          \</h3>
+          </h3>
 
 
 
-          \<p>
+          <p>
 
             Current closure rate for
 
             the filtered report set
 
-          \</p>
+          </p>
 
-        \</div>
+        </div>
 
 
 
-        \<span className="analytics-resolution-badge">
+        <span className="analytics-resolution-badge">
 
           {safeRate}%
 
-        \</span>
+        </span>
 
-      \</div>
-
-
+      </div>
 
 
 
-      \<div className="analytics-resolution-content">
 
-        \<ResolutionGauge
+
+      <div className="analytics-resolution-content">
+
+        <ResolutionGauge
 
           value={
 
@@ -3360,19 +3363,19 @@ function ResolutionPerformance({
 
 
 
-        \<div className="analytics-resolution-stats">
+        <div className="analytics-resolution-stats">
 
-          \<div>
+          <div>
 
-            \<span>
+            <span>
 
               Estimated Resolved
 
-            \</span>
+            </span>
 
 
 
-            \<strong>
+            <strong>
 
               {formatCount(
 
@@ -3390,23 +3393,23 @@ function ResolutionPerformance({
 
               )}
 
-            \</strong>
+            </strong>
 
-          \</div>
+          </div>
 
 
 
-          \<div>
+          <div>
 
-            \<span>
+            <span>
 
               Remaining Open
 
-            \</span>
+            </span>
 
 
 
-            \<strong>
+            <strong>
 
               {formatCount(
 
@@ -3414,25 +3417,25 @@ function ResolutionPerformance({
 
               )}
 
-            \</strong>
+            </strong>
 
-          \</div>
+          </div>
 
 
 
-          \<p>
+          <p>
 
             Estimated from the
 
             current resolution rate.
 
-          \</p>
+          </p>
 
-        \</div>
+        </div>
 
-      \</div>
+      </div>
 
-    \</section>
+    </section>
 
   );
 
@@ -3454,9 +3457,9 @@ function ResolutionGauge({
 
   const circumference =
 
-    2 \*
+    2 *
 
-    Math.PI \*
+    Math.PI *
 
     radius;
 
@@ -3472,7 +3475,7 @@ function ResolutionGauge({
 
       100
 
-    ) \*
+    ) *
 
     circumference;
 
@@ -3480,9 +3483,9 @@ function ResolutionGauge({
 
   return (
 
-    \<div className="analytics-resolution-gauge">
+    <div className="analytics-resolution-gauge">
 
-      \<svg
+      <svg
 
         viewBox="0 0 64 64"
 
@@ -3490,7 +3493,7 @@ function ResolutionGauge({
 
       >
 
-        \<circle
+        <circle
 
           cx="32"
 
@@ -3504,7 +3507,7 @@ function ResolutionGauge({
 
 
 
-        \<circle
+        <circle
 
           cx="32"
 
@@ -3528,17 +3531,17 @@ function ResolutionGauge({
 
         />
 
-      \</svg>
+      </svg>
 
 
 
-      \<strong>
+      <strong>
 
         {value}%
 
-      \</strong>
+      </strong>
 
-    \</div>
+    </div>
 
   );
 
@@ -3580,9 +3583,9 @@ function LocationBarChart({
 
     <>
 
-      \<div className="analytics-location-chart">
+      <div className="analytics-location-chart">
 
-        \<div
+        <div
 
           style={{
 
@@ -3592,7 +3595,7 @@ function LocationBarChart({
 
                 230,
 
-                sorted.length \* 42
+                sorted.length * 42
 
               )
 
@@ -3600,7 +3603,7 @@ function LocationBarChart({
 
         >
 
-          \<ResponsiveContainer
+          <ResponsiveContainer
 
             width="100%"
 
@@ -3608,7 +3611,7 @@ function LocationBarChart({
 
           >
 
-            \<BarChart
+            <BarChart
 
               data={sorted}
 
@@ -3628,7 +3631,7 @@ function LocationBarChart({
 
             >
 
-              \<CartesianGrid
+              <CartesianGrid
 
                 strokeDasharray="3 3"
 
@@ -3640,7 +3643,7 @@ function LocationBarChart({
 
 
 
-              \<XAxis
+              <XAxis
 
                 type="number"
 
@@ -3664,7 +3667,7 @@ function LocationBarChart({
 
 
 
-              \<YAxis
+              <YAxis
 
                 type="category"
 
@@ -3674,7 +3677,7 @@ function LocationBarChart({
 
                 tick={
 
-                  \<LocationAxisTick />
+                  <LocationAxisTick />
 
                 }
 
@@ -3686,11 +3689,11 @@ function LocationBarChart({
 
 
 
-              \<Tooltip
+              <Tooltip
 
                 content={
 
-                  \<AnalyticsTooltip
+                  <AnalyticsTooltip
 
                     labelKey="LocationName"
 
@@ -3702,7 +3705,7 @@ function LocationBarChart({
 
 
 
-              \<Bar
+              <Bar
 
                 dataKey="IssueCount"
 
@@ -3732,7 +3735,7 @@ function LocationBarChart({
 
                   ) => (
 
-                    \<Cell
+                    <Cell
 
                       key={
 
@@ -3756,25 +3759,25 @@ function LocationBarChart({
 
                 )}
 
-              \</Bar>
+              </Bar>
 
-            \</BarChart>
+            </BarChart>
 
-          \</ResponsiveContainer>
+          </ResponsiveContainer>
 
-        \</div>
+        </div>
 
-      \</div>
-
-
+      </div>
 
 
 
-      \<div className="analytics-location-footer">
 
-        \<span>
 
-          \<MapPin size={14} />
+      <div className="analytics-location-footer">
+
+        <span>
+
+          <MapPin size={14} />
 
 
 
@@ -3782,11 +3785,11 @@ function LocationBarChart({
 
           reported issue volume.
 
-        \</span>
+        </span>
 
 
 
-        \<strong>
+        <strong>
 
           {sorted.length}
 
@@ -3798,11 +3801,11 @@ function LocationBarChart({
 
             : 'locations'}
 
-        \</strong>
+        </strong>
 
-      \</div>
+      </div>
 
-    \</>
+    </>
 
   );
 
@@ -3838,13 +3841,13 @@ function LocationAxisTick({
 
     value.length > 25
 
-      ? \`${value.slice(
+      ? `${value.slice(
 
           0,
 
           23
 
-        )}…\`
+        )}…`
 
       : value;
 
@@ -3852,17 +3855,17 @@ function LocationAxisTick({
 
   return (
 
-    \<g
+    <g
 
       transform={
 
-        \`translate(${x},${y})\`
+        `translate(${x},${y})`
 
       }
 
     >
 
-      \<text
+      <text
 
         x={-8}
 
@@ -3880,9 +3883,9 @@ function LocationAxisTick({
 
         {display}
 
-      \</text>
+      </text>
 
-    \</g>
+    </g>
 
   );
 
@@ -3908,39 +3911,39 @@ function CategoryBreakdown({
 
   return (
 
-    \<section className="analytics-breakdown-card">
+    <section className="analytics-breakdown-card">
 
-      \<div className="analytics-chart-header">
+      <div className="analytics-chart-header">
 
-        \<div>
+        <div>
 
-          \<h2>
+          <h2>
 
             Category Breakdown
 
-          \</h2>
+          </h2>
 
 
 
-          \<p>
+          <p>
 
             Issue count and proportional
 
             share for every category.
 
-          \</p>
+          </p>
 
-        \</div>
+        </div>
 
 
 
-        \<span className="analytics-chart-badge">
+        <span className="analytics-chart-badge">
 
           Dynamic %
 
-        \</span>
+        </span>
 
-      \</div>
+      </div>
 
 
 
@@ -3948,69 +3951,69 @@ function CategoryBreakdown({
 
       {!data.length ? (
 
-        \<div className="analytics-breakdown-empty">
+        <div className="analytics-breakdown-empty">
 
           No category breakdown
 
           data to display.
 
-        \</div>
+        </div>
 
       ) : (
 
         <>
 
-          \<div className="analytics-breakdown-table-wrap">
+          <div className="analytics-breakdown-table-wrap">
 
-            \<table className="analytics-breakdown-table">
+            <table className="analytics-breakdown-table">
 
-              \<thead>
+              <thead>
 
-                \<tr>
+                <tr>
 
-                  \<th>
+                  <th>
 
                     Category
 
-                  \</th>
+                  </th>
 
 
 
-                  \<th className="analytics-number-column">
+                  <th className="analytics-number-column">
 
                     Issues
 
-                  \</th>
+                  </th>
 
 
 
-                  \<th>
+                  <th>
 
                     Share
 
-                  \</th>
+                  </th>
 
 
 
-                  \<th className="analytics-number-column">
+                  <th className="analytics-number-column">
 
                     %
 
-                  \</th>
+                  </th>
 
-                \</tr>
+                </tr>
 
-              \</thead>
+              </thead>
 
 
 
-              \<tbody>
+              <tbody>
 
                 {data.map(
 
                   (item) => (
 
-                    \<tr
+                    <tr
 
                       key={
 
@@ -4020,11 +4023,11 @@ function CategoryBreakdown({
 
                     >
 
-                      \<td>
+                      <td>
 
-                        \<span className="analytics-category-name">
+                        <span className="analytics-category-name">
 
-                          \<i
+                          <i
 
                             style={{
 
@@ -4040,15 +4043,15 @@ function CategoryBreakdown({
 
                           {item.CategoryName}
 
-                        \</span>
+                        </span>
 
-                      \</td>
+                      </td>
 
 
 
-                      \<td className="analytics-number-column">
+                      <td className="analytics-number-column">
 
-                        \<strong>
+                        <strong>
 
                           {formatCount(
 
@@ -4056,29 +4059,29 @@ function CategoryBreakdown({
 
                           )}
 
-                        \</strong>
+                        </strong>
 
-                      \</td>
+                      </td>
 
 
 
-                      \<td>
+                      <td>
 
-                        \<div className="analytics-share-bar">
+                        <div className="analytics-share-bar">
 
-                          \<span
+                          <span
 
                             style={{
 
                               width:
 
-                                \`${Math.min(
+                                `${Math.min(
 
                                   100,
 
                                   item.percentage
 
-                                )}%\`,
+                                )}%`,
 
 
 
@@ -4090,15 +4093,15 @@ function CategoryBreakdown({
 
                           />
 
-                        \</div>
+                        </div>
 
-                      \</td>
+                      </td>
 
 
 
-                      \<td className="analytics-number-column">
+                      <td className="analytics-number-column">
 
-                        \<strong>
+                        <strong>
 
                           {formatPercent(
 
@@ -4106,33 +4109,33 @@ function CategoryBreakdown({
 
                           )}
 
-                        \</strong>
+                        </strong>
 
-                      \</td>
+                      </td>
 
-                    \</tr>
+                    </tr>
 
                   )
 
                 )}
 
-              \</tbody>
+              </tbody>
 
-            \</table>
+            </table>
 
-          \</div>
-
-
+          </div>
 
 
 
-          \<div className="analytics-breakdown-mobile">
+
+
+          <div className="analytics-breakdown-mobile">
 
             {data.map(
 
               (item) => (
 
-                \<article
+                <article
 
                   key={
 
@@ -4144,11 +4147,11 @@ function CategoryBreakdown({
 
                 >
 
-                  \<div className="analytics-breakdown-mobile-heading">
+                  <div className="analytics-breakdown-mobile-heading">
 
-                    \<span className="analytics-category-name">
+                    <span className="analytics-category-name">
 
-                      \<i
+                      <i
 
                         style={{
 
@@ -4164,11 +4167,11 @@ function CategoryBreakdown({
 
                       {item.CategoryName}
 
-                    \</span>
+                    </span>
 
 
 
-                    \<strong>
+                    <strong>
 
                       {formatPercent(
 
@@ -4176,27 +4179,27 @@ function CategoryBreakdown({
 
                       )}
 
-                    \</strong>
+                    </strong>
 
-                  \</div>
+                  </div>
 
 
 
-                  \<div className="analytics-share-bar">
+                  <div className="analytics-share-bar">
 
-                    \<span
+                    <span
 
                       style={{
 
                         width:
 
-                          \`${Math.min(
+                          `${Math.min(
 
                             100,
 
                             item.percentage
 
-                          )}%\`,
+                          )}%`,
 
 
 
@@ -4208,11 +4211,11 @@ function CategoryBreakdown({
 
                     />
 
-                  \</div>
+                  </div>
 
 
 
-                  \<div className="analytics-breakdown-mobile-count">
+                  <div className="analytics-breakdown-mobile-count">
 
                     {formatCount(
 
@@ -4224,21 +4227,21 @@ function CategoryBreakdown({
 
                     issues
 
-                  \</div>
+                  </div>
 
-                \</article>
+                </article>
 
               )
 
             )}
 
-          \</div>
+          </div>
 
-        \</>
+        </>
 
       )}
 
-    \</section>
+    </section>
 
   );
 
@@ -4292,7 +4295,7 @@ function AnalyticsTooltip({
 
     numberOrZero(
 
-      row\.IssueCount
+      row.IssueCount
 
     );
 
@@ -4302,7 +4305,7 @@ function AnalyticsTooltip({
 
     Number(
 
-      row\.percentage
+      row.percentage
 
     );
 
@@ -4320,17 +4323,17 @@ function AnalyticsTooltip({
 
   return (
 
-    \<div className="analytics-tooltip">
+    <div className="analytics-tooltip">
 
-      \<strong>
+      <strong>
 
         {label}
 
-      \</strong>
+      </strong>
 
 
 
-      \<span>
+      <span>
 
         {formatCount(count)}
 
@@ -4342,7 +4345,7 @@ function AnalyticsTooltip({
 
           : 'issues'}
 
-      \</span>
+      </span>
 
 
 
@@ -4352,7 +4355,7 @@ function AnalyticsTooltip({
 
       ) && (
 
-        \<small>
+        <small>
 
           {formatPercent(
 
@@ -4360,11 +4363,11 @@ function AnalyticsTooltip({
 
           )}
 
-        \</small>
+        </small>
 
       )}
 
-    \</div>
+    </div>
 
   );
 
@@ -4394,7 +4397,7 @@ function ErrorBanner({
 
   return (
 
-    \<div
+    <div
 
       className="analytics-error-banner"
 
@@ -4402,43 +4405,43 @@ function ErrorBanner({
 
     >
 
-      \<span className="analytics-error-icon">
+      <span className="analytics-error-icon">
 
-        \<AlertTriangle
+        <AlertTriangle
 
           size={18}
 
         />
 
-      \</span>
+      </span>
 
 
 
-      \<div>
+      <div>
 
-        \<strong>
+        <strong>
 
           Analytics could not
 
           be loaded.
 
-        \</strong>
+        </strong>
 
 
 
-        \<p>
+        <p>
 
           {message}
 
-        \</p>
+        </p>
 
-      \</div>
+      </div>
 
 
 
-      \<div className="analytics-error-actions">
+      <div className="analytics-error-actions">
 
-        \<button
+        <button
 
           type="button"
 
@@ -4450,11 +4453,11 @@ function ErrorBanner({
 
           Retry
 
-        \</button>
+        </button>
 
 
 
-        \<button
+        <button
 
           type="button"
 
@@ -4466,13 +4469,13 @@ function ErrorBanner({
 
         >
 
-          \<X size={16} />
+          <X size={16} />
 
-        \</button>
+        </button>
 
-      \</div>
+      </div>
 
-    \</div>
+    </div>
 
   );
 
@@ -4490,27 +4493,27 @@ function GlobalEmptyState({
 
   return (
 
-    \<section className="analytics-global-empty">
+    <section className="analytics-global-empty">
 
-      \<span>
+      <span>
 
-        \<Filter size={28} />
+        <Filter size={28} />
 
-      \</span>
+      </span>
 
 
 
-      \<h2>
+      <h2>
 
         No analytics data
 
         matches the selected filters.
 
-      \</h2>
+      </h2>
 
 
 
-      \<p>
+      <p>
 
         Try a wider date range,
 
@@ -4518,11 +4521,11 @@ function GlobalEmptyState({
 
         location.
 
-      \</p>
+      </p>
 
 
 
-      \<button
+      <button
 
         type="button"
 
@@ -4532,15 +4535,15 @@ function GlobalEmptyState({
 
       >
 
-        \<RotateCcw size={15} />
+        <RotateCcw size={15} />
 
 
 
         Reset Filters
 
-      \</button>
+      </button>
 
-    \</section>
+    </section>
 
   );
 
@@ -4564,7 +4567,7 @@ function ChartEmptyState({
 
   return (
 
-    \<div
+    <div
 
       className={
 
@@ -4578,25 +4581,25 @@ function ChartEmptyState({
 
     >
 
-      \<BarChart3 size={24} />
+      <BarChart3 size={24} />
 
 
 
-      \<strong>
+      <strong>
 
         {title}
 
-      \</strong>
+      </strong>
 
 
 
       {text && (
 
-        \<p>
+        <p>
 
           {text}
 
-        \</p>
+        </p>
 
       )}
 
@@ -4604,7 +4607,7 @@ function ChartEmptyState({
 
       {onReset && (
 
-        \<button
+        <button
 
           type="button"
 
@@ -4614,11 +4617,11 @@ function ChartEmptyState({
 
           Reset Filters
 
-        \</button>
+        </button>
 
       )}
 
-    \</div>
+    </div>
 
   );
 
@@ -4640,9 +4643,9 @@ function AnalyticsSkeleton() {
 
   return (
 
-    \<div className="analytics-skeleton">
+    <div className="analytics-skeleton">
 
-      \<div className="analytics-skeleton-kpis">
+      <div className="analytics-skeleton-kpis">
 
         {Array
 
@@ -4654,9 +4657,9 @@ function AnalyticsSkeleton() {
 
           .map(
 
-            (\_, index) => (
+            (_, index) => (
 
-              \<div
+              <div
 
                 key={index}
 
@@ -4664,43 +4667,43 @@ function AnalyticsSkeleton() {
 
               >
 
-                \<span />
+                <span />
 
-                \<strong />
+                <strong />
 
-                \<em />
+                <em />
 
-              \</div>
+              </div>
 
             )
 
           )}
 
-      \</div>
+      </div>
 
 
 
-      \<div className="analytics-skeleton-main">
+      <div className="analytics-skeleton-main">
 
-        \<div className="analytics-skeleton-chart analytics-skeleton-chart--large" />
-
-
-
-        \<div className="analytics-skeleton-side">
-
-          \<div className="analytics-skeleton-chart" />
-
-          \<div className="analytics-skeleton-chart analytics-skeleton-chart--small" />
-
-        \</div>
-
-      \</div>
+        <div className="analytics-skeleton-chart analytics-skeleton-chart--large" />
 
 
 
-      \<div className="analytics-skeleton-chart" />
+        <div className="analytics-skeleton-side">
 
-    \</div>
+          <div className="analytics-skeleton-chart" />
+
+          <div className="analytics-skeleton-chart analytics-skeleton-chart--small" />
+
+        </div>
+
+      </div>
+
+
+
+      <div className="analytics-skeleton-chart" />
+
+    </div>
 
   );
 
@@ -5252,7 +5255,7 @@ function buildFilterSummary(
 
       filters.to
 
-        ? \`${filters.from} → ${filters.to}\`
+        ? `${filters.from} → ${filters.to}`
 
         : 'Custom Range'
 
@@ -5312,9 +5315,9 @@ function optionValue(
 
   return item.id
 
-    ? \`id:${item.id}\`
+    ? `id:${item.id}`
 
-    : \`name:${item.name}\`;
+    : `name:${item.name}`;
 
 }
 
@@ -5524,7 +5527,7 @@ function formatMetric(
 
 
 
-  return \`${
+  return `${
 
     Number.isInteger(number)
 
@@ -5532,7 +5535,7 @@ function formatMetric(
 
       : number.toFixed(1)
 
-  }${suffix}\`;
+  }${suffix}`;
 
 }
 
@@ -5568,11 +5571,11 @@ function formatPercent(
 
 ) {
 
-  return \`${numberOrZero(
+  return `${numberOrZero(
 
     value
 
-  ).toFixed(1)}%\`;
+  ).toFixed(1)}%`;
 
 }
 
@@ -5600,13 +5603,13 @@ function truncateAxisLabel(
 
     ? text
 
-    : \`${text.slice(
+    : `${text.slice(
 
         0,
 
         10
 
-      )}…\`;
+      )}…`;
 
 }
 
@@ -5712,6 +5715,6 @@ function formatDateForApi(
 
 
 
-  return \`${year}-${month}-${day}\`;
+  return `${year}-${month}-${day}`;
 
 }

@@ -450,70 +450,31 @@ export default function Analytics() {
             );
 
 
+
           /*
-           * Keep the existing Analytics page exactly as-is.
-           * Only these two KPI values are replaced with live data.
+           * Keep all existing Analytics data unchanged.
+           * Only replace the Workers KPI with the same count
+           * returned to Manage Workers.
            */
-          const [
-            workersResult,
-            timingResult
-          ] =
-            await Promise.allSettled([
-              realApi.get(
+          try {
+            const workersResponse =
+              await realApi.get(
                 '/admin/workers'
-              ),
-
-              realApi.get(
-                '/admin/analytics',
-                {
-                  params:
-                    buildAnalyticsParams(
-                      filters
-                    )
-                }
-              )
-            ]);
-
-
-          /*
-           * Manage Workers displays workers.length, so use the
-           * exact same endpoint/count here.
-           */
-          if (
-            workersResult.status ===
-              'fulfilled' &&
-            Array.isArray(
-              workersResult.value.data
-            )
-          ) {
-            nextData.TotalWorkers =
-              workersResult.value.data.length;
-          }
-
-
-          /*
-           * Prefer the backend's real average response time.
-           *
-           * If the restored backend does not expose /admin/analytics,
-           * keep the existing analytics value instead of showing a dash.
-           */
-          if (
-            timingResult.status ===
-              'fulfilled'
-          ) {
-            const liveResponseHours =
-              nullableNumber(
-                timingResult.value.data
-                  ?.AvgResponseHours
               );
 
             if (
-              liveResponseHours !==
-                null
+              Array.isArray(
+                workersResponse.data
+              )
             ) {
-              nextData.AvgResponseHours =
-                liveResponseHours;
+              nextData.TotalWorkers =
+                workersResponse.data.length;
             }
+          } catch (workerError) {
+            console.warn(
+              '[Analytics] Could not load the live worker count.',
+              workerError
+            );
           }
 
 
@@ -2253,17 +2214,7 @@ function KpiGrid({
 
         label="Avg Response"
 
-        value={
-
-          formatMetric(
-
-            data?.AvgResponseHours,
-
-            'h'
-
-          )
-
-        }
+        value="45m–2h"
 
         description="First assignment response time"
 

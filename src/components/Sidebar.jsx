@@ -1,1143 +1,1435 @@
 import {
+
   useEffect,
+
   useState
+
 } from 'react';
 
+
+
 import {
+
   NavLink,
+
   useLocation
+
 } from 'react-router-dom';
 
-import {
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react';
+
 
 import {
+
+  Landmark,
+
+  LogOut,
+
+  Menu,
+
+  X
+
+} from 'lucide-react';
+
+
+
+import {
+
   useAuth
+
 } from '../context/AuthContext';
+
 
 
 const MOBILE_BREAKPOINT = 900;
 
 
-/*
- * logo2.png lives in /public.
- *
- * Using BASE_URL is important because the production app
- * is deployed under:
- *
- *   /grp-03-39/
- *
- * Development:
- *   /logo2.png
- *
- * Production:
- *   /grp-03-39/logo2.png
- */
-const LOGO_URL =
-  `${import.meta.env.BASE_URL}favicon3.jpeg`;
-
-
-/* =============================================================
-   SIDEBAR
-============================================================= */
 
 export default function Sidebar({
+
   sections,
+
   roleLabel,
+
   userName,
+
   userSubtitle
+
 }) {
-  const {
-    logout
-  } = useAuth();
+
+  const { logout } = useAuth();
 
 
-  const location =
-    useLocation();
+
+  const location = useLocation();
 
 
-  const [
-    isMobile,
-    setIsMobile
-  ] = useState(
-    typeof window !==
-      'undefined'
-      ? window.innerWidth <=
-        MOBILE_BREAKPOINT
+
+  const [isMobile, setIsMobile] = useState(
+
+    typeof window !== 'undefined'
+
+      ? window.innerWidth <= MOBILE_BREAKPOINT
+
       : false
+
   );
 
 
-  const [
-    mobileOpen,
-    setMobileOpen
-  ] = useState(false);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
 
 
-  const initials =
-    getInitials(
-      userName
-    );
+
+  const initials = getInitials(userName);
 
 
-  /* ==========================================================
+
+
+
+  /* ============================================================
+
      RESPONSIVE BREAKPOINT
-  ========================================================== */
+
+  ============================================================ */
+
+
 
   useEffect(() => {
+
     function handleResize() {
+
       const mobile =
-        window.innerWidth <=
-        MOBILE_BREAKPOINT;
+
+        window.innerWidth <= MOBILE_BREAKPOINT;
 
 
-      setIsMobile(
-        mobile
-      );
+
+      setIsMobile(mobile);
+
 
 
       if (!mobile) {
-        setMobileOpen(
-          false
-        );
+
+        setMobileOpen(false);
+
       }
+
     }
+
 
 
     window.addEventListener(
+
       'resize',
+
       handleResize
+
     );
 
 
+
     return () => {
+
       window.removeEventListener(
+
         'resize',
+
         handleResize
+
       );
+
     };
+
   }, []);
 
 
-  /* ==========================================================
+
+
+
+  /* ============================================================
+
      CLOSE MOBILE MENU AFTER NAVIGATION
-  ========================================================== */
+
+  ============================================================ */
+
+
 
   useEffect(() => {
-    setMobileOpen(
-      false
-    );
-  }, [
-    location.pathname
-  ]);
+
+    setMobileOpen(false);
+
+  }, [location.pathname]);
 
 
-  /* ==========================================================
-     PREVENT BODY SCROLL WHILE DRAWER IS OPEN
-  ========================================================== */
+
+
+
+  /* ============================================================
+
+     PREVENT BODY SCROLL WHILE MOBILE DRAWER IS OPEN
+
+  ============================================================ */
+
+
 
   useEffect(() => {
-    if (
-      !isMobile ||
-      !mobileOpen
-    ) {
+
+    if (!isMobile || !mobileOpen) {
+
       return;
+
     }
 
 
+
     const previousOverflow =
-      document.body.style
-        .overflow;
+
+      document.body.style.overflow;
 
 
-    document.body.style
-      .overflow =
-        'hidden';
+
+    document.body.style.overflow = 'hidden';
+
 
 
     return () => {
-      document.body.style
-        .overflow =
-          previousOverflow;
+
+      document.body.style.overflow =
+
+        previousOverflow;
+
     };
+
   }, [
+
     isMobile,
+
     mobileOpen
+
   ]);
 
 
-  /* ==========================================================
-     MOBILE
-  ========================================================== */
+
+
+
+  /* ============================================================
+
+     MOBILE VERSION
+
+  ============================================================ */
+
+
 
   if (isMobile) {
+
     return (
+
       <>
+
         <header
+
           style={{
+
             height: 58,
 
             width: '100%',
 
-            background:
-              'var(--navy-800)',
+            background: 'var(--navy-800)',
 
-            color:
-              'white',
+            color: 'white',
 
-            display:
-              'flex',
 
-            alignItems:
-              'center',
 
-            gap:
-              10,
+            display: 'flex',
 
-            padding:
-              '0 14px',
+            alignItems: 'center',
 
-            position:
-              'sticky',
+            gap: 10,
 
-            top:
-              0,
 
-            zIndex:
-              1500,
+
+            padding: '0 14px',
+
+
+
+            position: 'sticky',
+
+            top: 0,
+
+            zIndex: 1500,
+
+
 
             borderBottom:
+
               '1px solid var(--navy-600)'
+
           }}
+
         >
 
-          {/* =================================================
-              MOBILE LOGO
-          ================================================= */}
+          <Landmark
 
-          <BrandLogo
-            mobile
+            size={21}
+
+            color="var(--gold-500)"
+
+            style={{
+
+              flexShrink: 0
+
+            }}
+
           />
 
 
-          {roleLabel && (
+
+          <div
+
+            style={{
+
+              minWidth: 0,
+
+
+
+              display: 'flex',
+
+              alignItems: 'center',
+
+              gap: 7
+
+            }}
+
+          >
+
             <span
+
               style={{
-                fontSize:
-                  9,
 
-                fontWeight:
-                  800,
+                fontWeight: 700,
 
-                background:
-                  'var(--navy-600)',
+                fontSize: 16,
 
-                color:
-                  '#d9e4f1',
+                whiteSpace: 'nowrap'
 
-                padding:
-                  '3px 7px',
-
-                borderRadius:
-                  999,
-
-                letterSpacing:
-                  0.6,
-
-                whiteSpace:
-                  'nowrap'
               }}
+
             >
-              {roleLabel}
+
+              Fix{' '}
+
+              <span
+
+                style={{
+
+                  color: 'var(--gold-500)'
+
+                }}
+
+              >
+
+                MyTown
+
+              </span>
+
             </span>
-          )}
 
 
-          {/* MENU BUTTON */}
+
+            {roleLabel && (
+
+              <span
+
+                style={{
+
+                  fontSize: 9,
+
+                  fontWeight: 800,
+
+
+
+                  background:
+
+                    'var(--navy-600)',
+
+
+
+                  padding: '3px 7px',
+
+                  borderRadius: 999,
+
+
+
+                  letterSpacing: 0.6,
+
+                  whiteSpace: 'nowrap'
+
+                }}
+
+              >
+
+                {roleLabel}
+
+              </span>
+
+            )}
+
+          </div>
+
+
+
+
 
           <button
+
             type="button"
+
             onClick={() =>
+
               setMobileOpen(
-                (
-                  open
-                ) => !open
+
+                (open) => !open
+
               )
+
             }
+
             aria-label={
+
               mobileOpen
+
                 ? 'Close navigation'
+
                 : 'Open navigation'
+
             }
-            aria-expanded={
-              mobileOpen
-            }
+
+            aria-expanded={mobileOpen}
+
             style={{
-              marginLeft:
-                'auto',
 
-              width:
-                38,
+              marginLeft: 'auto',
 
-              height:
-                38,
 
-              borderRadius:
-                9,
+
+              width: 38,
+
+              height: 38,
+
+
+
+              borderRadius: 9,
+
+
 
               border:
+
                 '1px solid rgba(255,255,255,0.16)',
 
+
+
               background:
+
                 'rgba(255,255,255,0.08)',
 
-              color:
-                'white',
 
-              display:
-                'flex',
 
-              alignItems:
-                'center',
+              color: 'white',
 
-              justifyContent:
-                'center',
 
-              cursor:
-                'pointer',
 
-              flexShrink:
-                0
+              display: 'flex',
+
+              alignItems: 'center',
+
+              justifyContent: 'center',
+
+
+
+              flexShrink: 0
+
             }}
+
           >
+
             {mobileOpen
-              ? (
-                <X
-                  size={20}
-                />
-              )
-              : (
-                <Menu
-                  size={20}
-                />
-              )}
+
+              ? <X size={20} />
+
+              : <Menu size={20} />}
+
           </button>
+
         </header>
 
 
-        {/* ===================================================
-            MOBILE DRAWER
-        =================================================== */}
+
+
 
         {mobileOpen && (
+
           <div
+
             style={{
-              position:
-                'fixed',
 
-              top:
-                58,
+              position: 'fixed',
 
-              left:
-                0,
 
-              right:
-                0,
 
-              bottom:
-                0,
+              top: 58,
 
-              zIndex:
-                1490,
+              left: 0,
+
+              right: 0,
+
+              bottom: 0,
+
+
+
+              zIndex: 1490,
+
+
 
               background:
+
                 'rgba(15, 33, 54, 0.58)',
 
-              display:
-                'flex'
+
+
+              display: 'flex'
+
             }}
+
             onClick={() =>
-              setMobileOpen(
-                false
-              )
+
+              setMobileOpen(false)
+
             }
+
           >
+
             <aside
+
               style={{
-                width:
-                  'min(88vw, 360px)',
+
+                width: 'min(88vw, 360px)',
+
+
 
                 height:
+
                   'calc(100dvh - 58px)',
 
+
+
                 background:
+
                   'var(--navy-800)',
 
-                color:
-                  'white',
 
-                display:
-                  'flex',
 
-                flexDirection:
-                  'column',
+                color: 'white',
+
+
+
+                display: 'flex',
+
+                flexDirection: 'column',
+
+
 
                 boxShadow:
+
                   '12px 0 32px rgba(0,0,0,0.28)',
 
-                overflow:
-                  'hidden'
+
+
+                overflow: 'hidden'
+
               }}
-              onClick={(
-                event
-              ) =>
-                event
-                  .stopPropagation()
+
+              onClick={(e) =>
+
+                e.stopPropagation()
+
               }
+
             >
+
               <UserBlock
-                initials={
-                  initials
-                }
-                userName={
-                  userName
-                }
-                userSubtitle={
-                  userSubtitle
-                }
+
+                initials={initials}
+
+                userName={userName}
+
+                userSubtitle={userSubtitle}
+
               />
+
 
 
               <PortalNavigation
-                sections={
-                  sections
-                }
+
+                sections={sections}
+
                 onNavigate={() =>
-                  setMobileOpen(
-                    false
-                  )
+
+                  setMobileOpen(false)
+
                 }
+
               />
+
 
 
               <LogoutButton
-                onLogout={
-                  logout
-                }
+
+                onLogout={logout}
+
               />
+
             </aside>
+
           </div>
+
         )}
+
       </>
+
     );
+
   }
 
 
-  /* ==========================================================
-     DESKTOP
-  ========================================================== */
+
+
+
+  /* ============================================================
+
+     DESKTOP VERSION
+
+  ============================================================ */
+
+
 
   return (
+
     <aside
+
       style={{
-        width:
-          'var(--sidebar-width)',
 
-        height:
-          '100vh',
+        width: 'var(--sidebar-width)',
 
-        maxHeight:
-          '100vh',
 
-        position:
-          'sticky',
 
-        top:
-          0,
+        /*
 
-        alignSelf:
-          'flex-start',
+         * IMPORTANT:
 
-        background:
-          'var(--navy-800)',
+         * The sidebar is locked to the viewport.
 
-        color:
-          'white',
+         * Long report lists will no longer stretch it.
 
-        display:
-          'flex',
+         */
 
-        flexDirection:
-          'column',
+        height: '100vh',
 
-        flexShrink:
-          0,
+        maxHeight: '100vh',
 
-        overflow:
-          'hidden'
+
+
+        position: 'sticky',
+
+        top: 0,
+
+
+
+        alignSelf: 'flex-start',
+
+
+
+        background: 'var(--navy-800)',
+
+        color: 'white',
+
+
+
+        display: 'flex',
+
+        flexDirection: 'column',
+
+
+
+        flexShrink: 0,
+
+
+
+        /*
+
+         * Prevent the entire sidebar from scrolling.
+
+         * Only the navigation section scrolls.
+
+         */
+
+        overflow: 'hidden'
+
       }}
+
     >
 
-      {/* =====================================================
+      {/* ========================================================
+
           BRAND
-      ===================================================== */}
+
+      ======================================================== */}
+
+
 
       <div
+
         style={{
-          minHeight:
-            78,
 
-          padding:
-            '12px 18px',
+          padding: '20px 20px 16px',
 
-          display:
-            'flex',
 
-          alignItems:
-            'center',
 
-          gap:
-            10,
+          display: 'flex',
+
+          alignItems: 'center',
+
+          gap: 8,
+
+
 
           borderBottom:
+
             '1px solid var(--navy-600)',
 
-          flexShrink:
-            0
+
+
+          flexShrink: 0
+
         }}
+
       >
 
-        <BrandLogo />
+        <Landmark
+
+          size={22}
+
+          color="var(--gold-500)"
+
+        />
+
+
+
+        <span
+
+          style={{
+
+            fontWeight: 700,
+
+            fontSize: 17,
+
+            whiteSpace: 'nowrap'
+
+          }}
+
+        >
+
+          Fix{' '}
+
+          <span
+
+            style={{
+
+              color: 'var(--gold-500)'
+
+            }}
+
+          >
+
+            MyTown
+
+          </span>
+
+        </span>
+
 
 
         {roleLabel && (
+
           <span
+
             style={{
-              marginLeft:
-                'auto',
 
-              fontSize:
-                9,
+              marginLeft: 'auto',
 
-              fontWeight:
-                800,
+
+
+              fontSize: 10,
+
+              fontWeight: 700,
+
+
 
               background:
+
                 'var(--navy-600)',
 
-              color:
-                '#d9e4f1',
 
-              padding:
-                '4px 8px',
 
-              borderRadius:
-                999,
+              padding: '3px 8px',
 
-              letterSpacing:
-                0.5,
 
-              whiteSpace:
-                'nowrap'
+
+              borderRadius: 999,
+
+
+
+              letterSpacing: 0.5
+
             }}
+
           >
+
             {roleLabel}
+
           </span>
+
         )}
+
       </div>
 
 
-      {/* =====================================================
+
+
+
+      {/* ========================================================
+
           USER
-      ===================================================== */}
+
+      ======================================================== */}
+
+
 
       <UserBlock
-        initials={
-          initials
-        }
-        userName={
-          userName
-        }
-        userSubtitle={
-          userSubtitle
-        }
+
+        initials={initials}
+
+        userName={userName}
+
+        userSubtitle={userSubtitle}
+
       />
 
 
-      {/* =====================================================
+
+
+
+      {/* ========================================================
+
           NAVIGATION
-      ===================================================== */}
+
+
+
+          flex: 1 fills available remaining height.
+
+          minHeight: 0 is important so overflowY works correctly.
+
+      ======================================================== */}
+
+
 
       <PortalNavigation
-        sections={
-          sections
-        }
+
+        sections={sections}
+
       />
 
 
-      {/* =====================================================
+
+
+
+      {/* ========================================================
+
           LOGOUT
-      ===================================================== */}
+
+
+
+          Because navigation is the flexible/scrollable section,
+
+          this button stays at the bottom of the viewport.
+
+      ======================================================== */}
+
+
 
       <LogoutButton
-        onLogout={
-          logout
-        }
+
+        onLogout={logout}
+
       />
+
     </aside>
+
   );
+
 }
 
 
-/* =============================================================
-   BRAND LOGO
-============================================================= */
 
-function BrandLogo({
-  mobile = false
-}) {
-  const [
-    failed,
-    setFailed
-  ] = useState(false);
-
-
-  /*
-   * No white card/background is placed behind the logo.
-   *
-   * The image sits directly on the same navy colour as the
-   * sidebar, which lets a transparent logo2.png blend naturally.
-   */
-  if (failed) {
-    return (
-      <div
-        style={{
-          color:
-            'white',
-
-          fontWeight:
-            800,
-
-          fontSize:
-            mobile
-              ? 15
-              : 17,
-
-          whiteSpace:
-            'nowrap'
-        }}
-      >
-        Fix{' '}
-
-        <span
-          style={{
-            color:
-              'var(--gold-500)'
-          }}
-        >
-          MyTown
-        </span>
-      </div>
-    );
-  }
-
-
-  return (
-    <div
-      style={{
-        width:
-          mobile
-            ? 122
-            : 138,
-
-        height:
-          mobile
-            ? 40
-            : 52,
-
-        display:
-          'flex',
-
-        alignItems:
-          'center',
-
-        justifyContent:
-          'flex-start',
-
-        overflow:
-          'hidden',
-
-        flexShrink:
-          0,
-
-        background:
-          'transparent'
-      }}
-    >
-      <img
-        src={
-          LOGO_URL
-        }
-        alt="Fix MyTown"
-        onError={() =>
-          setFailed(
-            true
-          )
-        }
-        style={{
-          display:
-            'block',
-
-          width:
-            '100%',
-
-          height:
-            '100%',
-
-          objectFit:
-            'contain',
-
-          objectPosition:
-            'left center',
-
-          background:
-            'transparent',
-
-          /*
-           * Small adjustment only.
-           *
-           * There is intentionally no border, card, white
-           * background or heavy shadow around the image.
-           */
-          filter:
-            'brightness(1.04) contrast(1.04)'
-        }}
-      />
-    </div>
-  );
-}
 
 
 /* =============================================================
+
    USER BLOCK
+
 ============================================================= */
+
+
 
 function UserBlock({
+
   initials,
+
   userName,
+
   userSubtitle
+
 }) {
+
   return (
+
     <div
+
       style={{
-        display:
-          'flex',
 
-        alignItems:
-          'center',
+        display: 'flex',
 
-        gap:
-          10,
+        alignItems: 'center',
 
-        padding:
-          '18px 20px',
+        gap: 10,
+
+
+
+        padding: '18px 20px',
+
+
 
         borderBottom:
+
           '1px solid var(--navy-600)',
 
-        flexShrink:
-          0
+
+
+        flexShrink: 0
+
       }}
+
     >
+
       <div
+
         style={{
-          width:
-            38,
 
-          height:
-            38,
+          width: 38,
 
-          borderRadius:
-            '50%',
+          height: 38,
 
-          background:
-            'var(--gold-500)',
 
-          color:
-            'var(--navy-900)',
 
-          display:
-            'flex',
+          borderRadius: '50%',
 
-          alignItems:
-            'center',
 
-          justifyContent:
-            'center',
 
-          fontWeight:
-            700,
+          background: 'var(--gold-500)',
 
-          fontSize:
-            14,
+          color: 'var(--navy-900)',
 
-          flexShrink:
-            0
+
+
+          display: 'flex',
+
+          alignItems: 'center',
+
+          justifyContent: 'center',
+
+
+
+          fontWeight: 700,
+
+          fontSize: 14,
+
+
+
+          flexShrink: 0
+
         }}
+
       >
+
         {initials}
+
       </div>
+
+
+
 
 
       <div
+
         style={{
-          minWidth:
-            0
+
+          minWidth: 0
+
         }}
+
       >
+
         <div
+
           style={{
-            fontWeight:
-              600,
 
-            fontSize:
-              14,
+            fontWeight: 600,
 
-            overflow:
-              'hidden',
+            fontSize: 14,
 
-            textOverflow:
-              'ellipsis',
 
-            whiteSpace:
-              'nowrap'
+
+            overflow: 'hidden',
+
+            textOverflow: 'ellipsis',
+
+            whiteSpace: 'nowrap'
+
           }}
+
         >
-          {userName ||
-            'User'}
+
+          {userName || 'User'}
+
         </div>
 
 
+
         <div
+
           style={{
-            fontSize:
-              12,
 
-            color:
-              '#9db2cc',
+            fontSize: 12,
 
-            overflow:
-              'hidden',
+            color: '#9db2cc',
 
-            textOverflow:
-              'ellipsis',
 
-            whiteSpace:
-              'nowrap'
+
+            overflow: 'hidden',
+
+            textOverflow: 'ellipsis',
+
+            whiteSpace: 'nowrap'
+
           }}
+
         >
-          {userSubtitle ||
-            ''}
+
+          {userSubtitle || ''}
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 }
 
 
+
+
+
 /* =============================================================
+
    NAVIGATION
+
 ============================================================= */
+
+
 
 function PortalNavigation({
+
   sections,
+
   onNavigate
+
 }) {
+
   return (
+
     <nav
+
       style={{
-        flex:
-          1,
 
-        minHeight:
-          0,
+        flex: 1,
 
-        padding:
-          '16px 12px',
 
-        overflowY:
-          'auto',
 
-        overflowX:
-          'hidden'
+        /*
+
+         * CRITICAL:
+
+         * Allows the nav itself to scroll without
+
+         * moving the Logout button.
+
+         */
+
+        minHeight: 0,
+
+
+
+        padding: '16px 12px',
+
+
+
+        overflowY: 'auto',
+
+        overflowX: 'hidden'
+
       }}
-    >
-      {sections.map(
-        (
-          section
-        ) => (
-          <div
-            key={
-              section.heading
-            }
-            style={{
-              marginBottom:
-                18
-            }}
-          >
-            <div
-              style={{
-                fontSize:
-                  10,
 
-                fontWeight:
-                  700,
+    >
+
+      {sections.map((section) => (
+
+        <div
+
+          key={section.heading}
+
+          style={{
+
+            marginBottom: 18
+
+          }}
+
+        >
+
+          <div
+
+            style={{
+
+              fontSize: 10,
+
+              fontWeight: 700,
+
+
+
+              color: '#7186a3',
+
+
+
+              letterSpacing: 0.8,
+
+
+
+              textTransform: 'uppercase',
+
+
+
+              padding: '0 10px 8px'
+
+            }}
+
+          >
+
+            {section.heading}
+
+          </div>
+
+
+
+
+
+          {section.items.map((item) => (
+
+            <NavLink
+
+              key={item.path}
+
+              to={item.path}
+
+              end={item.end}
+
+              onClick={onNavigate}
+
+              style={({ isActive }) => ({
+
+                display: 'flex',
+
+                alignItems: 'center',
+
+                gap: 10,
+
+
+
+                padding: '11px 10px',
+
+
+
+                borderRadius: 8,
+
+
+
+                fontSize: 14,
+
+                fontWeight: 600,
+
+
+
+                textDecoration: 'none',
+
+
 
                 color:
-                  '#7186a3',
 
-                letterSpacing:
-                  0.8,
+                  isActive
 
-                textTransform:
-                  'uppercase',
+                    ? 'var(--gold-500)'
 
-                padding:
-                  '0 10px 8px'
-              }}
+                    : '#c7d3e3',
+
+
+
+                background:
+
+                  isActive
+
+                    ? 'var(--navy-700)'
+
+                    : 'transparent',
+
+
+
+                marginBottom: 3
+
+              })}
+
             >
-              {
-                section.heading
-              }
-            </div>
+
+              <item.icon
+
+                size={17}
+
+                style={{
+
+                  flexShrink: 0
+
+                }}
+
+              />
 
 
-            {section.items.map(
-              (
-                item
-              ) => (
-                <NavLink
-                  key={
-                    item.path
-                  }
-                  to={
-                    item.path
-                  }
-                  end={
-                    item.end
-                  }
-                  onClick={
-                    onNavigate
-                  }
-                  style={({
-                    isActive
-                  }) => ({
-                    display:
-                      'flex',
 
-                    alignItems:
-                      'center',
+              <span
 
-                    gap:
-                      10,
+                style={{
 
-                    padding:
-                      '11px 10px',
+                  flex: 1,
 
-                    borderRadius:
-                      8,
+                  minWidth: 0
 
-                    fontSize:
-                      14,
+                }}
 
-                    fontWeight:
-                      600,
+              >
 
-                    textDecoration:
-                      'none',
+                {item.label}
 
-                    color:
-                      isActive
-                        ? 'var(--gold-500)'
-                        : '#c7d3e3',
+              </span>
 
-                    background:
-                      isActive
-                        ? 'var(--navy-700)'
-                        : 'transparent',
 
-                    marginBottom:
-                      3
-                  })}
+
+              {!!item.badge && (
+
+                <span
+
+                  style={{
+
+                    background: '#ef4444',
+
+                    color: 'white',
+
+
+
+                    fontSize: 11,
+
+                    fontWeight: 700,
+
+
+
+                    borderRadius: 999,
+
+
+
+                    padding: '1px 7px',
+
+
+
+                    flexShrink: 0
+
+                  }}
+
                 >
-                  <item.icon
-                    size={17}
-                    style={{
-                      flexShrink:
-                        0
-                    }}
-                  />
 
+                  {item.badge}
 
-                  <span
-                    style={{
-                      flex:
-                        1,
+                </span>
 
-                      minWidth:
-                        0
-                    }}
-                  >
-                    {
-                      item.label
-                    }
-                  </span>
+              )}
 
+            </NavLink>
 
-                  {!!item.badge && (
-                    <span
-                      style={{
-                        background:
-                          '#ef4444',
+          ))}
 
-                        color:
-                          'white',
+        </div>
 
-                        fontSize:
-                          11,
+      ))}
 
-                        fontWeight:
-                          700,
-
-                        borderRadius:
-                          999,
-
-                        padding:
-                          '1px 7px',
-
-                        flexShrink:
-                          0
-                      }}
-                    >
-                      {
-                        item.badge
-                      }
-                    </span>
-                  )}
-                </NavLink>
-              )
-            )}
-          </div>
-        )
-      )}
     </nav>
+
   );
+
 }
 
 
+
+
+
 /* =============================================================
+
    LOGOUT BUTTON
+
 ============================================================= */
+
+
 
 function LogoutButton({
+
   onLogout
+
 }) {
+
   return (
+
     <button
+
       type="button"
-      onClick={
-        onLogout
-      }
+
+      onClick={onLogout}
+
       style={{
-        margin:
-          12,
 
-        padding:
-          '11px 12px',
+        margin: 12,
 
-        background:
-          'transparent',
+
+
+        padding: '11px 12px',
+
+
+
+        background: 'transparent',
+
+
 
         border:
+
           '1px solid var(--navy-600)',
 
-        borderRadius:
-          8,
 
-        color:
-          '#c7d3e3',
 
-        display:
-          'flex',
+        borderRadius: 8,
 
-        alignItems:
-          'center',
 
-        justifyContent:
-          'center',
 
-        gap:
-          8,
+        color: '#c7d3e3',
 
-        fontSize:
-          14,
 
-        fontWeight:
-          600,
 
-        cursor:
-          'pointer',
+        display: 'flex',
 
-        flexShrink:
-          0
+        alignItems: 'center',
+
+        justifyContent: 'center',
+
+        gap: 8,
+
+
+
+        fontSize: 14,
+
+        fontWeight: 600,
+
+
+
+        flexShrink: 0
+
       }}
+
     >
-      <LogOut
-        size={16}
-      />
+
+      <LogOut size={16} />
+
+
 
       Logout
+
     </button>
+
   );
+
 }
 
 
+
+
+
 /* =============================================================
+
    INITIALS
+
 ============================================================= */
 
-function getInitials(
-  name
-) {
+
+
+function getInitials(name) {
+
   if (!name) {
+
     return 'U';
+
   }
 
 
+
   return (
+
     name
+
       .trim()
-      .split(
-        /\s+/
-      )
-      .filter(
-        Boolean
-      )
-      .map(
-        (
-          part
-        ) =>
-          part[0]
-      )
-      .slice(
-        0,
-        2
-      )
+
+      .split(/\s+/)
+
+      .filter(Boolean)
+
+      .map((part) => part[0])
+
+      .slice(0, 2)
+
       .join('')
-      .toUpperCase() ||
-    'U'
+
+      .toUpperCase() || 'U'
+
   );
+
 }

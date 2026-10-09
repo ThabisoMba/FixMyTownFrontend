@@ -1,47 +1,119 @@
 import axios from "axios";
 
-const appBase = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+const appBase = (
+  import.meta.env.BASE_URL || "/"
+).replace(/\/$/, "");
 
-const productionApiUrl = `${window.location.origin}${appBase}/api`;
+const configuredApiUrl =
+  import.meta.env.VITE_API_URL?.trim();
+
+const localApiUrl =
+  "http://localhost:5000/api";
+
+const productionApiUrl =
+  `${window.location.origin}${appBase}/api`;
+
+function getApiBaseUrl() {
+  /*
+   * If VITE_API_URL exists, use it.
+   *
+   * Examples:
+   *
+   * http://localhost:5000/api
+   *
+   * https://your-server.com/api
+   */
+  if (configuredApiUrl) {
+    return configuredApiUrl.replace(
+      /\/$/,
+      ""
+    );
+  }
+
+  /*
+   * Local development fallback.
+   */
+  if (import.meta.env.DEV) {
+    return localApiUrl;
+  }
+
+  /*
+   * Production fallback for deployments where
+   * frontend and backend share the same host.
+   */
+  return productionApiUrl;
+}
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV
-    ? import.meta.env.VITE_API_URL || "http://localhost:5000/api"
-    : productionApiUrl,
+  baseURL: getApiBaseUrl(),
+
+  headers: {
+    Accept: "application/json"
+  }
 });
 
 api.interceptors.request.use(
   (config) => {
     const token =
-      localStorage.getItem("fixmytown_token") ||
-      sessionStorage.getItem("fixmytown_token");
+      localStorage.getItem(
+        "fixmytown_token"
+      ) ||
+      sessionStorage.getItem(
+        "fixmytown_token"
+      );
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+
+  (error) =>
+    Promise.reject(error)
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) =>
+    response,
+
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("fixmytown_token");
-      localStorage.removeItem("fixmytown_user");
-      sessionStorage.removeItem("fixmytown_token");
-      sessionStorage.removeItem("fixmytown_user");
+    if (
+      error.response?.status ===
+      401
+    ) {
+      localStorage.removeItem(
+        "fixmytown_token"
+      );
 
-      const loginPath = `${appBase}/login`;
+      localStorage.removeItem(
+        "fixmytown_user"
+      );
 
-      if (window.location.pathname !== loginPath) {
-        window.location.href = loginPath;
+      sessionStorage.removeItem(
+        "fixmytown_token"
+      );
+
+      sessionStorage.removeItem(
+        "fixmytown_user"
+      );
+
+      const loginPath =
+        `${appBase}/login`;
+
+      if (
+        window.location.pathname !==
+        loginPath
+      ) {
+        window.location.href =
+          loginPath;
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(
+      error
+    );
   }
 );
 
